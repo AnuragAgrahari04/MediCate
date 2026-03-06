@@ -1,30 +1,30 @@
 """
 Medicate – Disease Prediction & Doctor Consultation Platform
-Settings — works for local dev, Render, and Railway production.
+Settings — works for both local dev and Railway production.
 """
 import os
 import dj_database_url
 from pathlib import Path
-from decouple import config, Csv
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
 DEBUG      = config('DEBUG', default=False, cast=bool)
 
-# Using Csv() helper for cleaner ALLOWED_HOSTS management
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+ALLOWED_HOSTS += ['.up.railway.app', '.railway.app']
 
-# Dynamic wildcards for common deployment platforms
-if not DEBUG:
-    ALLOWED_HOSTS += ['.railway.app', '.onrender.com']
-
-# Required for CSRF to work on HTTPS domains
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
-# Automatically trust subdomains if on production
-if not DEBUG:
-    # Note: These MUST include the scheme (https://)
-    CSRF_TRUSTED_ORIGINS += ['https://*.railway.app', 'https://*.onrender.com']
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
+)
+CSRF_TRUSTED_ORIGINS += ['https://*.up.railway.app', 'https://*.railway.app']
 
 INSTALLED_APPS = [
     'daphne',
@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Essential for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,14 +72,18 @@ WSGI_APPLICATION = 'medicate.wsgi.application'
 ASGI_APPLICATION  = 'medicate.asgi.application'
 
 # ── Database ──────────────────────────────────────────────────────
-# On Railway/Render, DATABASE_URL is provided automatically.
-DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
-        conn_max_age=600,
-        ssl_require=not DEBUG # Only require SSL in production
-    )
-}
+DATABASE_URL = config('DATABASE_URL', default='')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, conn_health_checks=True)
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -97,7 +101,6 @@ USE_TZ        = True
 STATIC_URL   = '/static/'
 STATIC_ROOT  = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-# Compression support for faster load times
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL  = '/media/'
@@ -116,9 +119,7 @@ if REDIS_URL:
     }
 else:
     CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        }
+        'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
     }
 
 # ── Auth ──────────────────────────────────────────────────────────
@@ -136,7 +137,7 @@ SESSION_COOKIE_AGE         = 86400
 SESSION_SAVE_EVERY_REQUEST = True
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
-# ── Security (Production Hardening) ───────────────────────────────
+# ── Security (production only) ────────────────────────────────────
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER        = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT            = True
