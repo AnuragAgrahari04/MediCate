@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% block title %}Check Disease — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.check-page{padding:2.5rem 1.5rem;max-width:900px;margin:0 auto;}
+.page-title{text-align:center;margin-bottom:2.5rem;}
+.page-title h1{margin-bottom:0.5rem;}
+.page-title p{font-size:1.0625rem;color:var(--text-secondary);max-width:580px;margin:0 auto;}
+.symptom-picker{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:2rem;margin-bottom:1.5rem;box-shadow:var(--shadow-md);}
+.picker-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;}
+.picker-header h3{margin:0;font-size:1.125rem;}
+.search-bar{display:flex;align-items:center;gap:0.5rem;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-md);padding:0.5rem 0.875rem;transition:border-color var(--trans-fast);}
+.search-bar:focus-within{border-color:var(--brand-teal);box-shadow:0 0 0 3px rgba(13,155,138,0.1);}
+.search-bar input{background:none;border:none;outline:none;font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);width:220px;}
+.search-bar input::placeholder{color:var(--text-muted);}
+.symptom-grid{display:flex;flex-wrap:wrap;gap:0.375rem;max-height:280px;overflow-y:auto;padding:0.25rem;}
+.symptom-grid::-webkit-scrollbar{width:4px;}
+.symptom-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.sym-btn{display:inline-flex;align-items:center;gap:0.25rem;padding:0.3125rem 0.75rem;border-radius:var(--radius-pill);font-size:0.8125rem;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--bg);color:var(--text-secondary);transition:all var(--trans-fast);white-space:nowrap;}
+.sym-btn:hover{border-color:var(--brand-teal);color:var(--brand-teal);background:var(--brand-teal-l);}
+.sym-btn.selected{border-color:var(--brand-teal);background:var(--brand-teal);color:#fff;}
+.sym-btn.hidden{display:none;}
+.selected-section{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);}
+.selected-label{font-size:0.8125rem;font-weight:600;color:var(--text-muted);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.06em;}
+.selected-list{display:flex;flex-wrap:wrap;gap:0.375rem;min-height:36px;}
+.sel-tag{display:inline-flex;align-items:center;gap:0.375rem;padding:0.3125rem 0.75rem;background:var(--brand-teal);color:#fff;border-radius:var(--radius-pill);font-size:0.8125rem;font-weight:500;}
+.sel-tag-remove{cursor:pointer;opacity:0.75;font-size:0.875rem;line-height:1;}
+.sel-tag-remove:hover{opacity:1;}
+.predict-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);flex-wrap:wrap;}
+.count-pill{background:var(--brand-teal-l);color:var(--brand-teal);border:1px solid rgba(13,155,138,0.25);border-radius:var(--radius-pill);padding:0.375rem 0.875rem;font-size:0.875rem;font-weight:600;}
+
+/* Result card */
+.result-card{background:var(--bg-card);border:2px solid var(--danger);border-radius:var(--radius-xl);overflow:hidden;margin-bottom:1.5rem;box-shadow:var(--shadow-xl);animation:resultReveal 0.5s ease;}
+@keyframes resultReveal{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+.result-hero{background:linear-gradient(135deg,#AED6F1,#85C1E9);padding:1.5rem 1.75rem;display:flex;align-items:center;gap:1rem;}
+[data-theme="dark"] .result-hero{background:linear-gradient(135deg,#0D2535,#1A3A50);}
+.result-icon{width:56px;height:56px;border-radius:var(--radius-lg);background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.75rem;flex-shrink:0;}
+.result-disease{font-family:var(--font-display);font-size:1.5rem;color:var(--text-primary);}
+.result-sub{font-size:0.875rem;color:var(--text-secondary);margin-top:0.125rem;}
+.result-body{padding:1.5rem 1.75rem;}
+.conf-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;}
+.conf-label{font-size:0.875rem;font-weight:600;color:var(--text-secondary);}
+.conf-pct{font-size:1.25rem;font-weight:800;color:var(--brand-teal);}
+.top-predictions{margin-top:1.25rem;}
+.pred-row{display:flex;align-items:center;gap:0.875rem;padding:0.5rem 0;border-bottom:1px solid var(--border);}
+.pred-row:last-child{border-bottom:none;}
+.pred-rank{width:24px;height:24px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:var(--text-muted);flex-shrink:0;}
+.pred-rank.top{background:var(--brand-teal);color:#fff;border-color:var(--brand-teal);}
+.pred-name{flex:1;font-size:0.875rem;font-weight:500;color:var(--text-primary);}
+.pred-pct-bar{width:100px;height:6px;background:var(--border);border-radius:var(--radius-pill);overflow:hidden;}
+.pred-pct-fill{height:100%;background:var(--brand-teal);border-radius:var(--radius-pill);}
+.pred-pct-val{font-size:0.8125rem;font-weight:700;color:var(--brand-teal);min-width:42px;text-align:right;}
+.result-footer{padding:1.25rem 1.75rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:0.875rem;flex-wrap:wrap;}
+.disclaimer{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-md);padding:0.875rem 1rem;font-size:0.8125rem;color:#92400E;margin-bottom:1.5rem;display:flex;gap:0.625rem;align-items:flex-start;}
+[data-theme="dark"] .disclaimer{color:#FCD34D;background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.2);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="check-page">
+  <div class="page-title">
+    <h1>🔬 Symptom Checker</h1>
+    <p>Select your symptoms below and our AI model will identify possible conditions with confidence scores.</p>
+  </div>
+
+  <!-- Result (shown after POST) -->
+  {% if result %}
+  <div class="result-card" id="resultCard">
+    <div class="result-hero">
+      <div class="result-icon">🏥</div>
+      <div>
+        <div class="result-disease">{{ result.disease }}</div>
+        <div class="result-sub">Patient: {{ request.user.patient_profile.name }} &nbsp;•&nbsp; Age: {{ request.user.patient_profile.age }}</div>
+      </div>
+      <span class="badge badge-teal" style="margin-left:auto;">{{ result.specialist }}</span>
+    </div>
+
+    <div class="result-body">
+      <div class="conf-row">
+        <span class="conf-label">Confidence Score</span>
+        <span class="conf-pct">{{ result.confidence }}%</span>
+      </div>
+      <div class="progress" style="height:10px;">
+        <div class="progress-bar" id="confBar" style="width:0%"></div>
+      </div>
+
+      {% if result.disease_info %}
+      <p style="margin-top:1rem;font-size:0.875rem;color:var(--text-secondary);">{{ result.disease_info }}</p>
+      {% endif %}
+
+      <!-- Top 5 predictions -->
+      {% if result.predictions|length > 1 %}
+      <div class="top-predictions">
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.625rem;">Top Predictions</div>
+        {% for disease, conf in result.predictions %}
+        <div class="pred-row">
+          <div class="pred-rank {% if forloop.first %}top{% endif %}">{{ forloop.counter }}</div>
+          <div class="pred-name">{{ disease }}</div>
+          <div class="pred-pct-bar"><div class="pred-pct-fill" style="width:{{ conf }}%"></div></div>
+          <div class="pred-pct-val">{{ conf }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="result-footer">
+      <a href="{% url 'consult_doctor' %}?specialist={{ result.specialist }}&disease={{ result.disease }}" class="btn btn-primary btn-pill">
+        👨‍⚕️ Consult a {{ result.specialist }}
+      </a>
+      <a href="https://www.google.com/search?q={{ result.disease }}+disease" target="_blank" class="btn btn-secondary btn-pill">
+        🔗 Learn about {{ result.disease }}
+      </a>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <span>⚠️</span>
+    <span>This tool does not provide medical advice. It is intended for informational purposes only and is not a substitute for professional medical diagnosis or treatment. Always consult a qualified doctor.</span>
+  </div>
+  {% endif %}
+
+  <!-- Symptom Picker Form -->
+  <div class="symptom-picker">
+    <div class="picker-header">
+      <h3>Select Your Symptoms</h3>
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="symSearch" placeholder="Search symptoms…" autocomplete="off">
+      </div>
+    </div>
+
+    <form method="POST" id="symptomForm">
+      {% csrf_token %}
+      <div class="symptom-grid" id="symptomGrid">
+        {% for sym in symptoms %}
+        <button type="button" class="sym-btn {% if sym in selected %}selected{% endif %}"
+          data-sym="{{ sym }}" onclick="toggleSymptom(this)">
+          {% if sym in selected %}✓ {% endif %}{{ sym|cut:'_' | title }}
+          <input type="checkbox" name="symptoms" value="{{ sym }}"
+            {% if sym in selected %}checked{% endif %} style="display:none;">
+        </button>
+        {% endfor %}
+      </div>
+
+      <div class="selected-section">
+        <div class="selected-label">Selected (<span id="selCount">{{ selected|length }}</span>)</div>
+        <div class="selected-list" id="selectedList">
+          {% for sym in selected %}
+          <span class="sel-tag" data-sym="{{ sym }}">
+            {{ sym|cut:'_'|title }}
+            <span class="sel-tag-remove" onclick="removeSymptom('{{ sym }}')">✕</span>
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="predict-bar">
+        <span class="count-pill" id="countPill">
+          <span id="selCount2">{{ selected|length }}</span> symptom(s) selected
+        </span>
+        <div style="display:flex;gap:0.75rem;align-items:center;">
+          {% if selected %}
+          <button type="button" class="btn btn-secondary btn-sm btn-pill" onclick="clearAll()">✕ Clear</button>
+          {% endif %}
+          <button type="submit" class="btn btn-primary btn-pill" id="predictBtn"
+            {% if selected|length < 2 %}disabled{% endif %} style="padding:0.75rem 1.75rem;">
+            🧠 Predict Disease
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const selected = new Set({{ selected|safe }});
+
+function updateUI() {
+  const count = selected.size;
+  document.getElementById('selCount').textContent  = count;
+  document.getElementById('selCount2').textContent = count;
+  document.getElementById('predictBtn').disabled   = count < 2;
+  // Rebuild selected list tags
+  const list = document.getElementById('selectedList');
+  list.innerHTML = '';
+  selected.forEach(sym => {
+    list.innerHTML += `<span class="sel-tag" data-sym="${sym}">
+      ${sym.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}
+      <span class="sel-tag-remove" onclick="removeSymptom('${sym}')">✕</span>
+    </span>`;
+  });
+  // Sync grid buttons
+  document.querySelectorAll('.sym-btn').forEach(btn => {
+    const s = btn.dataset.sym;
+    const chk = btn.querySelector('input[type=checkbox]');
+    if (selected.has(s)) {
+      btn.classList.add('selected');
+      btn.innerHTML = `✓ ${s.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}<input type="checkbox" name="symptoms" value="${s}" checked style="display:none;">`;
+    } else {
+      btn.classList.remove('selected');
+      btn.innerHTML = `${s.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}<input type="checkbox" name="symptoms" value="${s}" style="display:none;">`;
+    }
+  });
+}
+
+function toggleSymptom(btn) {
+  const sym = btn.dataset.sym;
+  if (selected.has(sym)) { selected.delete(sym); } else { selected.add(sym); }
+  updateUI();
+}
+
+function removeSymptom(sym) {
+  selected.delete(sym); updateUI();
+}
+
+function clearAll() {
+  selected.clear(); updateUI();
+}
+
+// Search filter
+document.getElementById('symSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase().replace(/\s+/g,'_');
+  document.querySelectorAll('.sym-btn').forEach(btn => {
+    btn.classList.toggle('hidden', !btn.dataset.sym.includes(q));
+  });
+});
+
+// Animate confidence bar on result
+const confBar = document.getElementById('confBar');
+if (confBar) {
+  setTimeout(() => confBar.style.width = '{{ result.confidence|default:0 }}%', 300);
+}
+
+// Scroll to result
+{% if result %}
+document.getElementById('resultCard')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+{% endif %}
+
+// Submit button loader
+document.getElementById('symptomForm').addEventListener('submit', function(e) {
+  if (selected.size < 2) { e.preventDefault(); return; }
+  const btn = document.getElementById('predictBtn');
+  btn.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:#fff;width:16px;height:16px;"></span> Analysing…';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

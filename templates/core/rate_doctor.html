@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Rate Dr. {{ consultation.doctor.name }} — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.rate-page{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:2rem 1rem;}
+.rate-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);width:100%;max-width:520px;overflow:hidden;}
+.rate-header{background:linear-gradient(135deg,var(--brand-navy),#1A4A7A);padding:2rem 2rem 1.5rem;color:#fff;text-align:center;}
+.rate-body{padding:2rem;}
+.stars-input{display:flex;justify-content:center;gap:0.5rem;margin-bottom:1.5rem;}
+.star-btn{font-size:2.5rem;cursor:pointer;transition:transform var(--trans-fast);background:none;border:none;line-height:1;}
+.star-btn:hover,.star-btn.lit{transform:scale(1.15);}
+.star-btn.lit{filter:drop-shadow(0 0 4px rgba(245,158,11,0.6));}
+</style>
+{% endblock %}
+{% block content %}
+<div class="rate-page">
+  <div class="rate-card">
+    <div class="rate-header">
+      <div style="font-size:3rem;margin-bottom:0.75rem;">⭐</div>
+      <h2 style="color:#fff;margin-bottom:0.25rem;">Rate Dr. {{ consultation.doctor.name }}</h2>
+      <p style="color:rgba(255,255,255,0.7);font-size:0.875rem;">{{ consultation.predicted_disease }} consultation</p>
+    </div>
+    <div class="rate-body">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="stars-input" id="starsInput">
+          {% for i in "12345" %}
+          <button type="button" class="star-btn" data-val="{{ forloop.counter }}" onclick="setRating({{ forloop.counter }})">☆</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="score" id="scoreInput" value="5">
+        <div class="form-group">
+          <label class="form-label">Your Review (optional)</label>
+          <textarea name="review" class="form-control" rows="4" placeholder="Share your experience…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-pill w-full" style="padding:0.875rem;" id="rateBtn">
+          Submit Rating ⭐
+        </button>
+      </form>
+      <div style="text-align:center;margin-top:1rem;">
+        <a href="{% url 'consultation_view' consultation.pk %}" style="font-size:0.875rem;color:var(--text-muted);">Skip for now</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let currentRating = 5;
+setRating(5);
+function setRating(val) {
+  currentRating = val;
+  document.getElementById('scoreInput').value = val;
+  document.querySelectorAll('.star-btn').forEach((btn, i) => {
+    btn.textContent = i < val ? '★' : '☆';
+    btn.classList.toggle('lit', i < val);
+    btn.style.color = i < val ? '#F59E0B' : 'var(--text-muted)';
+  });
+}
+</script>
+{% endblock %}

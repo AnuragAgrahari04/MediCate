@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Dr. {{ profile.name }} — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.profile-page{padding:2.5rem 1.5rem;max-width:1000px;margin:0 auto;}
+.profile-header{background:linear-gradient(135deg,#0A2040,#1A4A7A);border-radius:var(--radius-xl);padding:2rem;margin-bottom:2rem;display:flex;align-items:center;gap:1.5rem;color:#fff;}
+.ph-avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-size:3rem;flex-shrink:0;}
+.ph-name{font-family:var(--font-display);font-size:1.75rem;}
+.ph-sub{font-size:0.875rem;opacity:0.8;margin-top:0.25rem;}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.profile-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow-md);}
+.pc-title{font-weight:700;margin-bottom:1.25rem;font-size:1rem;display:flex;align-items:center;gap:0.5rem;}
+.info-field{margin-bottom:0.875rem;}
+.if-label{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:0.25rem;}
+.if-value{font-size:0.9375rem;color:var(--text-primary);}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.hidden{display:none!important;}
+{% for field in form %}.profile-page form select,.profile-page form input,.profile-page form textarea{width:100%;padding:0.625rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-body);font-size:0.9375rem;outline:none;}{% endfor %}
+@media(max-width:640px){.profile-grid{grid-template-columns:1fr;}.profile-header{flex-direction:column;text-align:center;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+  <div class="profile-header">
+    {% if profile.img %}
+      <img src="{{ profile.img.url }}" alt="Dr. {{ profile.name }}" class="ph-avatar" style="display:flex;">
+    {% else %}
+      <div class="ph-avatar">👨‍⚕️</div>
+    {% endif %}
+    <div>
+      <div class="ph-name">Dr. {{ profile.name }}</div>
+      <div class="ph-sub">{{ profile.specialization }} {% if profile.qualification %}· {{ profile.qualification }}{% endif %}</div>
+      {% if profile.hospital_name %}<div class="ph-sub">🏥 {{ profile.hospital_name }}</div>{% endif %}
+      {% if profile.city %}<div class="ph-sub">📍 {{ profile.full_address }}</div>{% endif %}
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem;">
+        {% if profile.is_verified %}<span class="badge badge-success">✓ Verified</span>{% endif %}
+        {% if profile.video_consult %}<span class="badge badge-teal">🎥 Video</span>{% endif %}
+        {% if profile.chat_consult  %}<span class="badge badge-info">💬 Chat</span>{% endif %}
+        <span class="badge badge-purple">⭐ {{ profile.rating }}/5 ({{ profile.total_ratings }})</span>
+        {% if profile.fee %}<span class="badge badge-warning">₹{{ profile.fee }}</span>{% endif %}
+      </div>
+    </div>
+    {% if is_owner %}
+    <div style="margin-left:auto;">
+      <button onclick="document.getElementById('editSection').classList.toggle('hidden')" class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;border-radius:var(--radius-pill);">
+        ✏️ Edit Profile
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="profile-grid">
+    <div class="profile-card">
+      <div class="pc-title">👨‍⚕️ Professional Info</div>
+      <div class="info-field"><div class="if-label">Specialization</div><div class="if-value">{{ profile.specialization|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Qualification</div><div class="if-value">{{ profile.qualification|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Experience</div><div class="if-value">{{ profile.experience_yrs|default:0 }} years</div></div>
+      <div class="info-field"><div class="if-label">Hospital</div><div class="if-value">{{ profile.hospital_name|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Consultation Fee</div><div class="if-value">{% if profile.fee %}₹{{ profile.fee }}{% else %}—{% endif %}</div></div>
+      {% if profile.available_from and profile.available_to %}
+      <div class="info-field"><div class="if-label">Availability</div><div class="if-value">{{ profile.available_from|time:"g:i A" }} – {{ profile.available_to|time:"g:i A" }}</div></div>
+      {% endif %}
+    </div>
+    <div class="profile-card">
+      <div class="pc-title">📍 Location & Contact</div>
+      <div class="info-field"><div class="if-label">Email</div><div class="if-value">{{ profile.email }}</div></div>
+      <div class="info-field"><div class="if-label">Mobile</div><div class="if-value">{{ profile.mobile_no|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Address</div><div class="if-value">{{ profile.full_address|default:'—' }}</div></div>
+      {% if profile.bio %}
+      <div class="info-field"><div class="if-label">About</div><div class="if-value" style="font-size:0.875rem;line-height:1.6;color:var(--text-secondary);">{{ profile.bio }}</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if is_owner %}
+  <div id="editSection" class="hidden" style="margin-top:1.5rem;">
+    <div class="profile-card">
+      <div class="pc-title">✏️ Edit Profile</div>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Full Name</label>{{ form.name }}</div>
+          <div class="form-group"><label class="form-label">Email</label>{{ form.email }}</div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Specialization</label>{{ form.specialization }}</div>
+          <div class="form-group"><label class="form-label">Qualification</label>{{ form.qualification }}</div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Experience (yrs)</label>{{ form.experience_yrs }}</div>
+          <div class="form-group"><label class="form-label">Fee (₹)</label>{{ form.fee }}</div>
+        </div>
+        <div class="form-group"><label class="form-label">Hospital / Clinic</label>{{ form.hospital_name }}</div>
+        <div class="form-group"><label class="form-label">Bio</label>{{ form.bio }}</div>
+        <div class="form-group"><label class="form-label">Street Address</label>{{ form.address }}</div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">City</label>{{ form.city }}</div>
+          <div class="form-group"><label class="form-label">State</label>{{ form.state }}</div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Pincode</label>{{ form.pincode }}</div>
+          <div class="form-group"><label class="form-label">Country</label>{{ form.country }}</div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Available From</label>{{ form.available_from }}</div>
+          <div class="form-group"><label class="form-label">Available To</label>{{ form.available_to }}</div>
+        </div>
+        <div class="form-group" style="display:flex;gap:1.5rem;">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">{{ form.chat_consult }} <span class="form-label" style="margin:0;">💬 Chat consultations</span></label>
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">{{ form.video_consult }} <span class="form-label" style="margin:0;">🎥 Video consultations</span></label>
+        </div>
+        <div class="form-group"><label class="form-label">Profile Photo</label>{{ form.img }}</div>
+        <button type="submit" class="btn btn-pill" style="padding:0.75rem 2rem;background:linear-gradient(135deg,#0A2040,#1A4A7A);color:#fff;">Save Changes →</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Patient Login — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.auth-page { min-height: calc(100vh - 64px); display:flex; align-items:center; justify-content:center; padding:2rem 1rem; }
+.auth-card  { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-xl); box-shadow:var(--shadow-xl); width:100%; max-width:460px; overflow:hidden; }
+.auth-header { background:linear-gradient(135deg, var(--brand-navy), #1A4A7A); padding:2.5rem 2rem; text-align:center; }
+.auth-header-icon { font-size:3rem; margin-bottom:0.75rem; display:block; }
+.auth-header h2 { color:#fff; font-family:var(--font-display); margin-bottom:0.375rem; }
+.auth-header p  { color:rgba(255,255,255,0.65); font-size:0.875rem; }
+.auth-body { padding:2rem; }
+.input-icon-wrap { position:relative; }
+.input-icon { position:absolute; left:0.875rem; top:50%; transform:translateY(-50%); font-size:1rem; pointer-events:none; }
+.input-icon-wrap .form-control { padding-left:2.5rem; }
+.auth-footer-text { text-align:center; margin-top:1.5rem; font-size:0.875rem; color:var(--text-muted); }
+.auth-footer-text a { color:var(--brand-teal); font-weight:600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="auth-header-icon">🧑‍💼</span>
+      <h2>Patient Login</h2>
+      <p>Sign in to access your health dashboard</p>
+    </div>
+    <div class="auth-body">
+      <form method="POST" action="{% url 'login_patient' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="input-icon-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" name="username" class="form-control" placeholder="Your username" required autocomplete="username">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-icon-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" name="password" class="form-control" placeholder="Your password" required autocomplete="current-password">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-gradient btn-pill w-full" style="margin-top:0.5rem;padding:0.875rem;">
+          Sign In →
+        </button>
+      </form>
+      <div class="auth-footer-text">
+        Don't have an account?
+        <a href="{% url 'signup_patient' %}">Create one here</a>
+      </div>
+      <div class="auth-footer-text" style="margin-top:0.5rem;">
+        Are you a doctor? <a href="{% url 'login_doctor' %}">Doctor login</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

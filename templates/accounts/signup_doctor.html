@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Registration — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.signup-page{padding:3rem 1rem;}
+.signup-wrap{max-width:760px;margin:0 auto;}
+.signup-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);overflow:hidden;}
+.signup-header{background:linear-gradient(135deg,#0A2040,#1A4A7A);padding:2.25rem 2rem;}
+.signup-header h2{color:#fff;font-family:var(--font-display);margin-bottom:0.25rem;}
+.signup-header p{color:rgba(255,255,255,0.65);font-size:0.875rem;}
+.signup-body{padding:2rem;}
+.form-section-title{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin:1.5rem 0 1rem;display:flex;align-items:center;gap:0.5rem;}
+.form-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+.error-list{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-md);padding:0.875rem 1rem;margin-bottom:1.25rem;font-size:0.875rem;color:var(--danger);}
+.toggle-row{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;}
+.toggle-row label{cursor:pointer;font-size:0.9rem;color:var(--text-secondary);}
+.toggle-row input[type=checkbox]{width:1.125rem;height:1.125rem;accent-color:var(--brand-teal);cursor:pointer;}
+@media(max-width:600px){.form-row,.form-row-3{grid-template-columns:1fr;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="signup-page">
+  <div class="signup-wrap">
+    <div class="signup-card">
+      <div class="signup-header">
+        <span style="font-size:2.5rem;display:block;margin-bottom:0.75rem;">👨‍⚕️</span>
+        <h2>Register as Doctor</h2>
+        <p>Join Medicate to accept patient consultations and help people near you</p>
+      </div>
+      <div class="signup-body">
+        {% if form.errors %}
+        <ul class="error-list">
+          {% for field in form %}{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}{% endfor %}
+          {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="POST" id="doctorSignup">
+          {% csrf_token %}
+
+          <div class="form-section-title">Account Credentials</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Username *</label>
+              <input type="text" name="username" class="form-control" placeholder="e.g. dr_sharma" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full Name *</label>
+              <input type="text" name="name" class="form-control" placeholder="Dr. Full Name" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" name="email" class="form-control" placeholder="doctor@hospital.com" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Password *</label>
+              <input type="password" name="password" class="form-control" placeholder="Min. 8 characters" required id="pw1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm Password *</label>
+              <input type="password" name="password2" class="form-control" placeholder="Repeat password" required id="pw2">
+            </div>
+          </div>
+
+          <div class="form-section-title">Professional Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Specialization *</label>
+              <select name="specialization" class="form-control" required>
+                <option value="">Select specialization</option>
+                {% for val, label in form.fields.specialization.choices %}
+                  {% if val %}<option value="{{ val }}">{{ label }}</option>{% endif %}
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Qualification</label>
+              <input type="text" name="qualification" class="form-control" placeholder="e.g. MBBS, MD">
+            </div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">Experience (years)</label>
+              <input type="number" name="experience_yrs" class="form-control" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mobile Number</label>
+              <input type="tel" name="mobile_no" class="form-control" placeholder="+91 …">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Consultation Fee (₹)</label>
+              <input type="number" name="fee" class="form-control" placeholder="500" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hospital / Clinic Name</label>
+            <input type="text" name="hospital_name" class="form-control" placeholder="Hospital or clinic name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bio / About</label>
+            <textarea name="bio" class="form-control" rows="3" placeholder="Brief description about yourself, specialties, approach…"></textarea>
+          </div>
+
+          <div class="form-section-title">📍 Clinic Address (for patient matching)</div>
+          <div class="form-group">
+            <label class="form-label">Street Address</label>
+            <input type="text" name="address" class="form-control" placeholder="Clinic address">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">City *</label>
+              <input type="text" name="city" class="form-control" placeholder="City" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">State</label>
+              <input type="text" name="state" class="form-control" placeholder="State">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Pincode</label>
+              <input type="text" name="pincode" class="form-control" placeholder="Pincode" maxlength="10">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Country</label>
+              <input type="text" name="country" class="form-control" value="India">
+            </div>
+          </div>
+
+          <div class="form-section-title">Consultation Options</div>
+          <div style="display:flex;flex-direction:column;gap:0.625rem;margin-bottom:1.25rem;">
+            <label class="toggle-row">
+              <input type="checkbox" name="chat_consult" checked>
+              <span>💬 Offer Chat Consultations</span>
+            </label>
+            <label class="toggle-row">
+              <input type="checkbox" name="video_consult" checked>
+              <span>🎥 Offer Video Consultations</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-pill w-full" id="submitBtn"
+            style="padding:0.9375rem;font-size:1rem;background:linear-gradient(135deg,#0A2040,#1A4A7A);color:#fff;">
+            Register as Doctor →
+          </button>
+        </form>
+
+        <div style="text-align:center;margin-top:1.5rem;font-size:0.875rem;color:var(--text-muted);">
+          Already registered? <a href="{% url 'login_doctor' %}" style="color:var(--brand-teal);font-weight:600;">Doctor login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('doctorSignup').addEventListener('submit', function(e) {
+  if (document.getElementById('pw1').value !== document.getElementById('pw2').value) {
+    e.preventDefault(); alert('Passwords do not match!'); return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Registering…'; btn.disabled = true;
+});
+</script>
+{% endblock %}

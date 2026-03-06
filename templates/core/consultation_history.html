@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Consultation History — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.history-page{padding:2.5rem 1.5rem;max-width:1100px;margin:0 auto;}
+.page-header{margin-bottom:2rem;}
+.filter-bar{display:flex;gap:0.625rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.filter-btn{padding:0.4375rem 1rem;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--bg-card);color:var(--text-secondary);font-size:0.8125rem;font-weight:600;cursor:pointer;transition:all var(--trans-fast);}
+.filter-btn.active,.filter-btn:hover{border-color:var(--brand-teal);color:var(--brand-teal);background:var(--brand-teal-l);}
+.consult-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:0.875rem;display:flex;align-items:center;gap:1.25rem;transition:all var(--trans-normal);}
+.consult-card:hover{box-shadow:var(--shadow-lg);border-color:rgba(13,155,138,0.25);}
+.cc-icon{width:48px;height:48px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.375rem;flex-shrink:0;}
+.cc-main{flex:1;}
+.cc-disease{font-weight:700;color:var(--text-primary);font-size:1rem;}
+.cc-meta{font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;display:flex;gap:0.75rem;flex-wrap:wrap;}
+.cc-actions{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;flex-shrink:0;}
+.empty-state{text-align:center;padding:5rem 2rem;color:var(--text-muted);}
+@media(max-width:640px){.consult-card{flex-direction:column;align-items:flex-start;}.cc-actions{width:100%;}}.table-view{display:none;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="history-page">
+  <div class="page-header">
+    <h1>📋 Consultation History</h1>
+    <p>{% if role == 'patient' %}Your past and active consultations with doctors{% else %}Patient consultations assigned to you{% endif %}</p>
+  </div>
+
+  {% if consultations %}
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterCards('all',this)">All</button>
+    <button class="filter-btn" onclick="filterCards('active',this)">Active</button>
+    <button class="filter-btn" onclick="filterCards('closed',this)">Closed</button>
+    <button class="filter-btn" onclick="filterCards('chat',this)">💬 Chat</button>
+    <button class="filter-btn" onclick="filterCards('video',this)">🎥 Video</button>
+  </div>
+
+  <div id="cardList">
+    {% for c in consultations %}
+    <div class="consult-card" data-status="{{ c.status }}" data-type="{{ c.consult_type }}">
+      <div class="cc-icon" style="background:{% if c.consult_type == 'video' %}rgba(13,155,138,0.12){% else %}rgba(59,130,246,0.12){% endif %}">
+        {% if c.consult_type == 'video' %}🎥{% else %}💬{% endif %}
+      </div>
+      <div class="cc-main">
+        <div class="cc-disease">{{ c.predicted_disease }}</div>
+        <div class="cc-meta">
+          {% if role == 'patient' %}
+            <span>👨‍⚕️ Dr. {{ c.doctor.name }}</span>
+            <span>{{ c.doctor.specialization }}</span>
+          {% else %}
+            <span>🧑‍💼 {{ c.patient.name }}</span>
+            {% if c.patient.city %}<span>📍 {{ c.patient.city }}</span>{% endif %}
+          {% endif %}
+          <span>📅 {{ c.date|date:"M d, Y" }}</span>
+          <span>🎯 {{ c.confident_score }}% confidence</span>
+        </div>
+      </div>
+      <div class="cc-actions">
+        <span class="badge {% if c.status == 'active' %}badge-success{% else %}badge-warning{% endif %}">{{ c.status }}</span>
+        <a href="{% url 'consultation_view' c.pk %}" class="btn btn-primary btn-sm btn-pill">
+          {% if c.status == 'active' %}Resume{% else %}View{% endif %}
+        </a>
+        {% if role == 'patient' and not c.rating and c.status == 'closed' %}
+        <a href="{% url 'rate_doctor' c.pk %}" class="btn btn-secondary btn-sm btn-pill">⭐ Rate</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div style="font-size:4rem;margin-bottom:1rem;">📋</div>
+    <div style="font-weight:600;color:var(--text-secondary);font-size:1.125rem;margin-bottom:0.5rem;">No consultations yet</div>
+    <p style="margin-bottom:1.5rem;">
+      {% if role == 'patient' %}Check your symptoms and start a consultation with a doctor.{% else %}Patients will appear here once they start a consultation with you.{% endif %}
+    </p>
+    {% if role == 'patient' %}
+    <a href="{% url 'check_disease' %}" class="btn btn-primary btn-pill">🔬 Check Disease</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterCards(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.consult-card').forEach(card => {
+    if (filter === 'all') { card.style.display=''; return; }
+    const match = card.dataset.status === filter || card.dataset.type === filter;
+    card.style.display = match ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

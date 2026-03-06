@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Dashboard — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.dashboard{padding:2.5rem 1.5rem;max-width:1200px;margin:0 auto;}
+.dash-header{display:flex;align-items:center;gap:1.5rem;margin-bottom:2.5rem;padding:1.75rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-md);}
+.dash-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;background:var(--brand-teal-l);border:3px solid var(--brand-teal);display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.dash-info{flex:1;}
+.dash-name{font-family:var(--font-display);font-size:1.5rem;color:var(--text-primary);}
+.dash-sub{color:var(--text-muted);font-size:0.875rem;margin-top:0.25rem;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:2.5rem;}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;text-align:center;}
+.stat-num{font-size:2rem;font-weight:800;color:var(--text-primary);}
+.stat-label{font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:2.5rem;}
+.action-card{background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;text-decoration:none;color:var(--text-primary);display:flex;align-items:center;gap:1rem;transition:all var(--trans-normal);}
+.action-card:hover{border-color:var(--brand-teal);transform:translateY(-2px);box-shadow:var(--shadow-lg);color:var(--text-primary);}
+.ac-icon{width:48px;height:48px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.375rem;flex-shrink:0;}
+.consult-row{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border);transition:background var(--trans-fast);}
+.consult-row:last-child{border-bottom:none;}
+.consult-row:hover{background:var(--bg);}
+@media(max-width:768px){.stats-row{grid-template-columns:repeat(2,1fr);}.action-grid{grid-template-columns:1fr;}.dash-header{flex-direction:column;text-align:center;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <div class="dash-header">
+    <div>
+      {% if profile.img %}
+        <img src="{{ profile.img.url }}" alt="avatar" class="dash-avatar" style="display:flex;">
+      {% else %}
+        <div class="dash-avatar">👨‍⚕️</div>
+      {% endif %}
+    </div>
+    <div class="dash-info">
+      <div class="dash-name">Dr. {{ profile.name }}</div>
+      <div class="dash-sub">
+        {{ profile.specialization }}
+        {% if profile.hospital_name %}• {{ profile.hospital_name }}{% endif %}
+        {% if profile.city %}• 📍 {{ profile.city }}{% endif %}
+        {% if profile.experience_yrs %}• {{ profile.experience_yrs }} yrs exp{% endif %}
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.875rem;">
+        {% if profile.is_verified %}<span class="badge badge-success">✓ Verified</span>{% else %}<span class="badge badge-warning">⏳ Pending Verification</span>{% endif %}
+        {% if profile.video_consult %}<span class="badge badge-teal">🎥 Video</span>{% endif %}
+        {% if profile.chat_consult  %}<span class="badge badge-info" >💬 Chat</span>{% endif %}
+        <span class="badge badge-purple">⭐ {{ profile.rating }}/5 ({{ profile.total_ratings }} ratings)</span>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:0.75rem;">
+        <a href="{% url 'doctor_profile' request.user.username %}" class="btn btn-secondary btn-sm">✏️ Edit Profile</a>
+        <a href="{% url 'give_feedback' %}" class="btn btn-secondary btn-sm">💬 Feedback</a>
+      </div>
+    </div>
+    {% if pending > 0 %}
+    <div style="flex-shrink:0;text-align:center;">
+      <div style="font-size:2rem;font-weight:800;color:var(--brand-teal);">{{ pending }}</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">Active Cases</div>
+      <a href="{% url 'consultation_history' %}" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">View →</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">{{ profile.consultations.count }}</div>
+      <div class="stat-label">Total Consultations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ pending }}</div>
+      <div class="stat-label">Active Cases</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ profile.rating }}</div>
+      <div class="stat-label">Average Rating</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ profile.total_ratings }}</div>
+      <div class="stat-label">Patient Reviews</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="action-grid">
+    <a href="{% url 'consultation_history' %}" class="action-card">
+      <div class="ac-icon" style="background:rgba(13,155,138,0.12);">📋</div>
+      <div>
+        <div style="font-weight:700;font-size:1rem;">Consultation History</div>
+        <div style="font-size:0.8125rem;color:var(--text-muted);">View and manage all patient consultations</div>
+      </div>
+    </a>
+    <a href="{% url 'give_feedback' %}" class="action-card">
+      <div class="ac-icon" style="background:rgba(124,58,237,0.12);">💬</div>
+      <div>
+        <div style="font-weight:700;font-size:1rem;">Give Feedback</div>
+        <div style="font-size:0.8125rem;color:var(--text-muted);">Share your experience with the platform</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Recent -->
+  {% if recent %}
+  <div class="card">
+    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:var(--font-display);font-size:1.25rem;">📋 Recent Consultations</div>
+      <a href="{% url 'consultation_history' %}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% for c in recent %}
+      <div class="consult-row">
+        <div style="width:40px;height:40px;border-radius:var(--radius-md);background:rgba(13,155,138,0.1);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;">
+          {% if c.consult_type == 'video' %}🎥{% else %}💬{% endif %}
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600;color:var(--text-primary);font-size:0.9375rem;">{{ c.predicted_disease }}</div>
+          <div style="font-size:0.8125rem;color:var(--text-muted);">Patient: {{ c.patient.name }} • {{ c.date|date:"M d, Y" }}</div>
+        </div>
+        <span class="badge {% if c.status == 'active' %}badge-success{% else %}badge-warning{% endif %}">{{ c.status }}</span>
+        <a href="{% url 'consultation_view' c.pk %}" class="btn btn-secondary btn-sm">Open</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

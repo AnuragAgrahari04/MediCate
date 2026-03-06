@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% block title %}Consult a Doctor — Medicate{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+.consult-page{padding:2.5rem 1.5rem;max-width:1300px;margin:0 auto;}
+.page-header{margin-bottom:2rem;}
+.layout{display:grid;grid-template-columns:1fr 420px;gap:1.75rem;align-items:start;}
+
+.section-divider{display:flex;align-items:center;gap:0.875rem;margin:1.5rem 0 1.25rem;}
+.section-divider-line{flex:1;height:1px;background:var(--border);}
+.section-divider-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;padding:0.3rem 0.875rem;border-radius:var(--radius-pill);border:1px solid;}
+.label-reg{color:var(--brand-teal);background:rgba(13,155,138,0.08);border-color:rgba(13,155,138,0.25);}
+.label-real{color:#2563EB;background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.2);}
+
+.doctor-list{display:flex;flex-direction:column;gap:1rem;}
+
+/* Registered doctor card */
+.doctor-card{background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:all var(--trans-normal);position:relative;overflow:hidden;}
+.doctor-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand-teal);transform:scaleY(0);transform-origin:bottom;transition:transform var(--trans-normal);}
+.doctor-card:hover{box-shadow:var(--shadow-xl);border-color:rgba(13,155,138,0.3);}
+.doctor-card:hover::before{transform:scaleY(1);}
+.dc-header{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1rem;}
+.dc-avatar{width:64px;height:64px;border-radius:var(--radius-md);object-fit:cover;background:var(--brand-teal-l);display:flex;align-items:center;justify-content:center;font-size:1.75rem;flex-shrink:0;border:2px solid var(--border);}
+.dc-info{flex:1;}
+.dc-name{font-weight:700;font-size:1.0625rem;color:var(--text-primary);}
+.dc-spec{font-size:0.875rem;color:var(--brand-teal);font-weight:600;margin-top:0.125rem;}
+.dc-sub{font-size:0.8125rem;color:var(--text-muted);margin-top:0.125rem;}
+.dc-meta-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;}
+.dc-actions{display:flex;gap:0.625rem;flex-wrap:wrap;}
+.dc-distance{display:inline-flex;align-items:center;gap:0.25rem;font-size:0.8125rem;color:var(--text-muted);background:var(--bg);border:1px solid var(--border);padding:0.25rem 0.625rem;border-radius:var(--radius-pill);}
+
+/* Real doctor card */
+.real-card{background:var(--bg-card);border:1.5px solid rgba(59,130,246,0.2);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;transition:all var(--trans-normal);position:relative;overflow:hidden;}
+.real-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#3B82F6;transform:scaleY(0);transform-origin:bottom;transition:transform var(--trans-normal);}
+.real-card:hover{box-shadow:var(--shadow-xl);border-color:rgba(59,130,246,0.4);}
+.real-card:hover::before{transform:scaleY(1);}
+.real-header{display:flex;align-items:flex-start;gap:0.875rem;margin-bottom:0.875rem;}
+.real-icon{width:52px;height:52px;border-radius:var(--radius-md);background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;border:2px solid rgba(59,130,246,0.2);}
+.real-name{font-weight:700;font-size:1rem;color:var(--text-primary);}
+.real-addr{font-size:0.8125rem;color:var(--text-muted);margin-top:0.2rem;line-height:1.4;}
+.real-meta{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.875rem;align-items:center;}
+.real-actions{display:flex;gap:0.625rem;flex-wrap:wrap;}
+.src-google{background:rgba(234,67,53,0.08);color:#EA4335;border:1px solid rgba(234,67,53,0.2);font-size:0.7rem;font-weight:700;padding:0.2rem 0.5rem;border-radius:var(--radius-pill);}
+.src-osm{background:rgba(59,130,246,0.08);color:#2563EB;border:1px solid rgba(59,130,246,0.2);font-size:0.7rem;font-weight:700;padding:0.2rem 0.5rem;border-radius:var(--radius-pill);}
+.open-now{color:#16A34A;font-size:0.75rem;font-weight:700;}
+.closed-now{color:#DC2626;font-size:0.75rem;font-weight:700;}
+
+/* Map */
+.map-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-md);position:sticky;top:80px;}
+.map-panel-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.625rem;}
+.map-panel-header h3{font-size:1rem;margin:0;}
+#doctorMap{height:500px;}
+.map-legend{padding:0.625rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:1.25rem;font-size:0.75rem;color:var(--text-muted);}
+.ldot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:0.3rem;vertical-align:middle;}
+
+/* Modal */
+.ctype-overlay{display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;}
+.ctype-overlay.open{display:flex;}
+.ctype-modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:2rem;max-width:440px;width:100%;box-shadow:var(--shadow-xl);}
+.ctype-modal h3{font-family:var(--font-display);font-size:1.375rem;text-align:center;margin-bottom:0.375rem;}
+.ctype-modal p{text-align:center;color:var(--text-secondary);font-size:0.875rem;margin-bottom:1.75rem;}
+.ctype-cards{display:flex;gap:1rem;}
+.ctype-card{flex:1;padding:1.5rem 1rem;border:2px solid var(--border);border-radius:var(--radius-lg);text-align:center;cursor:pointer;transition:all var(--trans-normal);}
+.ctype-card:hover{border-color:var(--brand-teal);background:var(--brand-teal-l);}
+.ctype-card-icon{font-size:2.5rem;display:block;margin-bottom:0.5rem;}
+.ctype-card-title{font-weight:700;}
+.ctype-card-sub{font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;}
+.empty-state{text-align:center;padding:3rem 2rem;color:var(--text-muted);}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.map-panel{position:static;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="consult-page">
+  <div class="page-header">
+    <h1>👨‍⚕️ Consult a Doctor</h1>
+    <p style="color:var(--text-secondary);">
+      {% if specialist %}Showing <strong>{{ specialist }}</strong> doctors{% else %}All available doctors{% endif %}
+      {% if disease %} for <strong>{{ disease }}</strong>{% endif %}
+      {% if patient.city %} &nbsp;•&nbsp; 📍 Near <strong>{{ patient.city }}</strong>{% endif %}
+    </p>
+  </div>
+
+  <div class="layout">
+    <div>
+
+      {% if not doctors and not real_doctors %}
+      <div class="empty-state">
+        <div style="font-size:3.5rem;margin-bottom:1rem;">🔍</div>
+        <div style="font-weight:600;color:var(--text-secondary);margin-bottom:0.5rem;">No doctors found</div>
+        <p>Make sure your profile has your city filled in so we can find doctors near you.</p>
+        <a href="{% url 'consult_doctor' %}" class="btn btn-primary btn-pill" style="margin-top:1.25rem;">Browse All Doctors</a>
+      </div>
+      {% endif %}
+
+      {# ─── REGISTERED (Medicate) doctors ─── #}
+      {% if doctors %}
+      <div class="section-divider">
+        <div class="section-divider-line"></div>
+        <span class="section-divider-label label-reg">✅ On Medicate — Book Online Instantly</span>
+        <div class="section-divider-line"></div>
+      </div>
+      <div class="doctor-list">
+        {% for doc in doctors %}
+        <div class="doctor-card">
+          <div class="dc-header">
+            {% if doc.img %}<img src="{{ doc.img.url }}" class="dc-avatar" style="display:flex;" alt="">
+            {% else %}<div class="dc-avatar">👨‍⚕️</div>{% endif %}
+            <div class="dc-info">
+              <div class="dc-name">Dr. {{ doc.name }}
+                {% if doc.is_verified %}<span class="badge badge-success" style="font-size:0.65rem;margin-left:0.375rem;">✓ Verified</span>{% endif %}
+              </div>
+              <div class="dc-spec">{{ doc.specialization }}</div>
+              {% if doc.hospital_name %}<div class="dc-sub">🏥 {{ doc.hospital_name }}</div>{% endif %}
+              {% if doc.city %}<div class="dc-sub">📍 {{ doc.city }}{% if doc.state %}, {{ doc.state }}{% endif %}</div>{% endif %}
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              {% if doc.rating %}<div style="font-size:1.125rem;font-weight:800;">{{ doc.rating }}<span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">/5</span></div>
+              <div style="color:#F59E0B;">{% for i in "12345" %}{% if forloop.counter <= doc.rating %}★{% else %}☆{% endif %}{% endfor %}</div>{% endif %}
+              {% if doc.fee %}<div style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;">₹{{ doc.fee }}/session</div>{% endif %}
+            </div>
+          </div>
+          <div class="dc-meta-row">
+            {% if doc.distance_km %}<span class="dc-distance">📍 {{ doc.distance_km }} km away</span>{% endif %}
+            {% if doc.experience_yrs %}<span class="badge badge-navy">{{ doc.experience_yrs }} yrs exp</span>{% endif %}
+            {% if doc.video_consult %}<span class="badge badge-teal">🎥 Video</span>{% endif %}
+            {% if doc.chat_consult %}<span class="badge badge-info">💬 Chat</span>{% endif %}
+            {% if doc.qualification %}<span class="badge badge-purple">{{ doc.qualification }}</span>{% endif %}
+          </div>
+          {% if doc.bio %}<p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">{{ doc.bio|truncatechars:140 }}</p>{% endif %}
+          <div class="dc-actions">
+            <button class="btn btn-primary btn-pill"
+              onclick="openConsultModal({{ doc.id }},'Dr. {{ doc.name|escapejs }}',{{ doc.chat_consult|yesno:'true,false' }},{{ doc.video_consult|yesno:'true,false' }})">
+              🩺 Consult Now
+            </button>
+            <a href="{% url 'doctor_profile' doc.user.username %}" class="btn btn-secondary btn-pill">View Profile</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {# ─── REAL doctors from OSM / Google ─── #}
+      {% if real_doctors %}
+      <div class="section-divider" style="margin-top:2rem;">
+        <div class="section-divider-line"></div>
+        <span class="section-divider-label label-real">🌍 Real Doctors Near {{ patient.city|default:"You" }}</span>
+        <div class="section-divider-line"></div>
+      </div>
+      <p style="font-size:0.8125rem;color:var(--text-muted);margin-bottom:1.25rem;text-align:center;">
+        Actual clinics &amp; hospitals in your area from public maps data. Contact them directly for appointments.
+      </p>
+      <div class="doctor-list">
+        {% for doc in real_doctors %}
+        <div class="real-card">
+          <div class="real-header">
+            <div class="real-icon">{% if doc.source == 'google' %}🔴{% else %}🔵{% endif %}</div>
+            <div style="flex:1;">
+              <div class="real-name">{{ doc.name }}</div>
+              <div class="real-addr">{{ doc.address }}</div>
+            </div>
+            <div style="flex-shrink:0;text-align:right;">
+              {% if doc.distance_km %}<div class="dc-distance" style="margin-bottom:0.25rem;">{{ doc.distance_km }} km</div>{% endif %}
+              {% if doc.open_now %}<div class="open-now">● Open Now</div>
+              {% else %}{% if doc.open_now is not None %}<div class="closed-now">● Closed</div>{% endif %}{% endif %}
+            </div>
+          </div>
+          <div class="real-meta">
+            {% if doc.source == 'google' %}<span class="src-google">Google Maps</span>
+            {% else %}<span class="src-osm">OpenStreetMap</span>{% endif %}
+            {% if doc.rating %}<span style="color:#F59E0B;font-size:0.875rem;">★ {{ doc.rating }}</span>
+              {% if doc.total_ratings %}<span style="font-size:0.75rem;color:var(--text-muted);">({{ doc.total_ratings }})</span>{% endif %}
+            {% endif %}
+            {% if doc.phone %}<span style="font-size:0.8125rem;color:var(--text-secondary);">📞 {{ doc.phone }}</span>{% endif %}
+            {% if doc.speciality %}<span class="badge badge-info" style="font-size:0.7rem;">{{ doc.speciality }}</span>{% endif %}
+          </div>
+          <div class="real-actions">
+            <a href="{{ doc.maps_url }}" target="_blank" class="btn btn-sm btn-pill" style="border:1.5px solid rgba(59,130,246,0.4);color:#3B82F6;background:rgba(59,130,246,0.05);">🗺️ View on Map</a>
+            {% if doc.phone %}<a href="tel:{{ doc.phone }}" class="btn btn-secondary btn-sm btn-pill">📞 Call</a>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Map -->
+    <div class="map-panel">
+      <div class="map-panel-header">
+        <span>🗺️</span>
+        <h3>Doctors Near You</h3>
+        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">
+          {{ doctors|length }} registered{% if real_doctors %} + {{ real_doctors|length }} real{% endif %}
+        </span>
+      </div>
+      <div id="doctorMap"></div>
+      <div class="map-legend">
+        <span><span class="ldot" style="background:#EF4444;"></span>Your location</span>
+        <span><span class="ldot" style="background:#0D9B8A;"></span>On Medicate</span>
+        <span><span class="ldot" style="background:#3B82F6;"></span>Real doctors</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="ctype-overlay" id="ctypeOverlay" onclick="if(event.target===this)closeConsultModal()">
+  <div class="ctype-modal">
+    <h3>Start Consultation</h3>
+    <p id="ctypeDocName">Choose how you'd like to consult</p>
+    <div class="ctype-cards" id="ctypeCards"></div>
+    <form method="POST" action="{% url 'start_consultation' %}" id="consultForm" style="display:none;">
+      {% csrf_token %}
+      <input type="hidden" name="doctor_id"    id="hdDoctorId">
+      <input type="hidden" name="consult_type" id="hdConsultType">
+      <input type="hidden" name="disease"      value="{{ disease }}">
+    </form>
+    <button type="button" class="btn btn-secondary w-full btn-pill" onclick="closeConsultModal()" style="margin-top:1rem;">Cancel</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const patLat = {{ patient.latitude|default:'null' }};
+const patLon = {{ patient.longitude|default:'null' }};
+const specialist = "{{ specialist|escapejs }}";
+
+const map = L.map('doctorMap').setView(
+  (patLat && patLon) ? [patLat, patLon] : [25.3176, 82.9739],
+  (patLat && patLon) ? 12 : 5
+);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'© OpenStreetMap', maxZoom:19
+}).addTo(map);
+
+if (patLat && patLon) {
+  L.marker([patLat,patLon],{icon:L.divIcon({
+    html:'<div style="background:#EF4444;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>',
+    className:'',iconAnchor:[7,7]
+  })}).addTo(map).bindPopup('<b>📍 Your Location</b>');
+}
+
+// Registered doctors (teal)
+fetch('/api/doctors/map/?specialist='+encodeURIComponent(specialist)+(patLat?'&lat='+patLat+'&lon='+patLon:''))
+  .then(r=>r.json()).then(g=>{
+    g.features.forEach(f=>{
+      const c=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
+      L.marker(c,{icon:L.divIcon({
+        html:'<div style="background:#0D9B8A;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)">✚</div>',
+        className:'',iconAnchor:[16,16]
+      })}).addTo(map).bindPopup('<b>'+f.properties.name+'</b><br>'+f.properties.specialization+(f.properties.distance_km!=null?'<br>📍 '+f.properties.distance_km+' km':''));
+    });
+  }).catch(()=>{});
+
+// Real doctors (blue) — embedded from Django
+const realDocs = [
+{% for doc in real_doctors %}
+  {lat:{{ doc.lat|default:0 }},lon:{{ doc.lon|default:0 }},name:"{{ doc.name|escapejs }}",addr:"{{ doc.address|escapejs }}",rating:{{ doc.rating|default:0 }},phone:"{{ doc.phone|default:''|escapejs }}",url:"{{ doc.maps_url|escapejs }}"},
+{% endfor %}
+];
+const bounds=[];
+if(patLat&&patLon) bounds.push([patLat,patLon]);
+realDocs.forEach(d=>{
+  if(!d.lat||!d.lon) return;
+  bounds.push([d.lat,d.lon]);
+  L.marker([d.lat,d.lon],{icon:L.divIcon({
+    html:'<div style="background:#3B82F6;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)">M</div>',
+    className:'',iconAnchor:[14,14]
+  })}).addTo(map).bindPopup('<b>'+d.name+'</b><br>'+d.addr+(d.rating?'<br>⭐ '+d.rating:'')+(d.phone?'<br>📞 '+d.phone:'')+'<br><a href="'+d.url+'" target="_blank">View on map →</a>');
+});
+if(bounds.length>1) map.fitBounds(L.latLngBounds(bounds).pad(0.15));
+setTimeout(()=>map.invalidateSize(),300);
+
+function openConsultModal(id,name,chat,video){
+  document.getElementById('ctypeDocName').textContent='with '+name;
+  document.getElementById('hdDoctorId').value=id;
+  const c=document.getElementById('ctypeCards');
+  c.innerHTML='';
+  if(chat) c.innerHTML+=`<div class="ctype-card" onclick="submitConsult('chat')"><span class="ctype-card-icon">💬</span><div class="ctype-card-title">Chat</div><div class="ctype-card-sub">Real-time text</div></div>`;
+  if(video) c.innerHTML+=`<div class="ctype-card" onclick="submitConsult('video')"><span class="ctype-card-icon">🎥</span><div class="ctype-card-title">Video Call</div><div class="ctype-card-sub">Face-to-face</div></div>`;
+  if(!chat&&!video) c.innerHTML='<p style="color:var(--text-muted);text-align:center;width:100%;">No options available.</p>';
+  document.getElementById('ctypeOverlay').classList.add('open');
+}
+function closeConsultModal(){document.getElementById('ctypeOverlay').classList.remove('open');}
+function submitConsult(t){document.getElementById('hdConsultType').value=t;document.getElementById('consultForm').submit();}
+</script>
+{% endblock %}

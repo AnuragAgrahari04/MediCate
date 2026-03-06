@@ -1,0 +1,510 @@
+{% extends 'base.html' %}
+{% block title %}Consultation #{{ consultation.id }} — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.consult-page{padding:2rem 1.5rem;max-width:1300px;margin:0 auto;}
+.consult-layout{display:grid;grid-template-columns:320px 1fr;gap:1.5rem;align-items:start;}
+/* Left panel */
+.info-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-md);position:sticky;top:80px;}
+.info-panel-header{background:linear-gradient(135deg,var(--brand-navy),#1A4A7A);padding:1.25rem 1.5rem;color:#fff;}
+.ip-title{font-family:var(--font-display);font-size:1.125rem;margin-bottom:0.25rem;}
+.ip-sub{font-size:0.8125rem;opacity:0.7;}
+.info-section{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;padding:0.5rem 0;}
+.info-row:first-child{padding-top:0;}
+.info-label{font-size:0.8rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;flex-shrink:0;}
+.info-value{font-size:0.875rem;color:var(--text-primary);font-weight:500;text-align:right;}
+.sym-chips{display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.375rem;}
+.sym-chip{background:var(--brand-teal-l);color:var(--brand-teal);border:1px solid rgba(13,155,138,0.25);font-size:0.75rem;padding:0.1875rem 0.5rem;border-radius:var(--radius-pill);}
+.info-actions{padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.625rem;}
+
+/* Right: tabs */
+.consult-right{display:flex;flex-direction:column;gap:1.25rem;}
+.tabs{display:flex;gap:0.25rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0.375rem;}
+.tab-btn{flex:1;padding:0.625rem;border:none;background:none;cursor:pointer;border-radius:var(--radius-md);font-family:var(--font-body);font-size:0.875rem;font-weight:600;color:var(--text-muted);transition:all var(--trans-fast);display:flex;align-items:center;justify-content:center;gap:0.375rem;}
+.tab-btn.active{background:var(--brand-teal);color:#fff;box-shadow:0 2px 8px rgba(13,155,138,0.3);}
+.tab-pane{display:none;}
+.tab-pane.active{display:flex;flex-direction:column;}
+
+/* Chat */
+.chat-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-md);display:flex;flex-direction:column;height:580px;}
+.chat-header{background:#22C55E;padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.75rem;flex-shrink:0;}
+.chat-header-title{color:#fff;font-weight:700;font-size:1rem;}
+.chat-header-sub{color:rgba(255,255,255,0.8);font-size:0.8125rem;}
+.chat-status{width:10px;height:10px;background:#fff;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,255,255,0.3);}
+.typing-indicator{font-size:0.8125rem;color:var(--text-muted);padding:0.25rem 1rem;height:24px;flex-shrink:0;}
+.messages-area{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;}
+.messages-area::-webkit-scrollbar{width:4px;}
+.messages-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.msg-wrap{display:flex;align-items:flex-end;gap:0.5rem;}
+.msg-wrap.mine{flex-direction:row-reverse;}
+.msg-bubble{max-width:72%;padding:0.625rem 0.875rem;border-radius:16px;font-size:0.9rem;line-height:1.5;word-break:break-word;}
+.msg-bubble.them{background:var(--bg);border:1px solid var(--border);color:var(--text-primary);border-bottom-left-radius:4px;}
+.msg-bubble.mine{background:var(--brand-teal);color:#fff;border-bottom-right-radius:4px;}
+.msg-bubble.ai-msg{background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);color:var(--text-primary);border-bottom-left-radius:4px;}
+.msg-meta{font-size:0.6875rem;color:var(--text-muted);display:flex;align-items:center;gap:0.25rem;}
+.chat-input-bar{padding:0.875rem;border-top:1px solid var(--border);display:flex;gap:0.625rem;align-items:flex-end;flex-shrink:0;}
+.chat-input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:0.625rem 0.875rem;font-family:var(--font-body);font-size:0.9rem;background:var(--bg);color:var(--text-primary);outline:none;resize:none;max-height:120px;transition:border-color var(--trans-fast);}
+.chat-input:focus{border-color:var(--brand-teal);}
+.empty-chat{text-align:center;padding:3rem 1rem;color:var(--text-muted);margin:auto;}
+
+/* Video */
+.video-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-md);}
+.video-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.video-area{padding:1.5rem;display:flex;gap:1rem;background:#0B0F1A;min-height:320px;position:relative;}
+#localVideo,#remoteVideo{flex:1;background:#1A1A2E;border-radius:var(--radius-lg);aspect-ratio:16/9;position:relative;}
+#localVideo video,#remoteVideo video{width:100%;height:100%;object-fit:cover;border-radius:var(--radius-lg);}
+.video-label{position:absolute;bottom:0.5rem;left:0.75rem;font-size:0.75rem;color:#fff;background:rgba(0,0,0,0.5);padding:0.25rem 0.5rem;border-radius:var(--radius-sm);}
+.video-no-agora{text-align:center;color:rgba(255,255,255,0.6);padding:3rem 2rem;width:100%;}
+.video-controls{padding:1rem 1.5rem;background:#0B0F1A;display:flex;justify-content:center;gap:1rem;}
+.vid-btn{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.25rem;transition:all var(--trans-fast);}
+.vid-btn:hover{transform:scale(1.1);}
+
+/* AI panel */
+.ai-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-md);height:580px;display:flex;flex-direction:column;}
+.ai-header{background:linear-gradient(135deg,#5B21B6,#7C3AED);padding:1rem 1.5rem;display:flex;align-items:center;gap:0.75rem;}
+.ai-header-title{color:#fff;font-weight:700;}
+.ai-header-sub{color:rgba(255,255,255,0.75);font-size:0.8125rem;}
+.ai-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.875rem;}
+.ai-messages::-webkit-scrollbar{width:4px;}
+.ai-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.ai-msg-user{align-self:flex-end;max-width:80%;background:var(--brand-teal);color:#fff;padding:0.625rem 0.875rem;border-radius:14px;border-bottom-right-radius:4px;font-size:0.875rem;}
+.ai-msg-ai{align-self:flex-start;max-width:90%;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);color:var(--text-primary);padding:0.75rem 0.875rem;border-radius:14px;border-bottom-left-radius:4px;font-size:0.875rem;line-height:1.6;}
+.ai-typing{align-self:flex-start;color:var(--text-muted);font-size:0.8125rem;display:flex;align-items:center;gap:0.375rem;}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--accent-purple);animation:aiDot 1.2s ease infinite;}
+.ai-dot:nth-child(2){animation-delay:.2s;}
+.ai-dot:nth-child(3){animation-delay:.4s;}
+@keyframes aiDot{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
+.ai-input-bar{padding:0.875rem;border-top:1px solid var(--border);display:flex;gap:0.625rem;}
+.ai-suggestions{display:flex;gap:0.5rem;flex-wrap:wrap;padding:0 1rem 0.75rem;}
+.ai-suggest-btn{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-pill);padding:0.3125rem 0.75rem;font-size:0.8rem;color:var(--text-secondary);cursor:pointer;transition:all var(--trans-fast);}
+.ai-suggest-btn:hover{border-color:var(--accent-purple);color:var(--accent-purple);}
+
+@media(max-width:900px){.consult-layout{grid-template-columns:1fr;}.info-panel{position:static;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="consult-page">
+  <div style="display:flex;align-items:center;gap:0.875rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+    <a href="{% url 'consultation_history' %}" class="btn btn-secondary btn-sm">← Back</a>
+    <h2 style="margin:0;font-size:1.25rem;">Consultation #{{ consultation.id }}</h2>
+    <span class="badge {% if consultation.status == 'active' %}badge-success{% else %}badge-warning{% endif %}">
+      {{ consultation.status }}
+    </span>
+    {% if consultation.consult_type == 'video' %}
+    <span class="badge badge-teal">🎥 Video</span>
+    {% else %}
+    <span class="badge badge-info">💬 Chat</span>
+    {% endif %}
+    <span style="margin-left:auto;display:flex;gap:0.625rem;">
+      {% if consultation.status == 'active' %}
+      <a href="{% url 'close_consultation' consultation.pk %}" class="btn btn-danger btn-sm btn-pill"
+        onclick="return confirm('Close this consultation?')">✕ Close</a>
+      {% endif %}
+    </span>
+  </div>
+
+  <div class="consult-layout">
+    <!-- Left: info panel -->
+    <div class="info-panel">
+      <div class="info-panel-header">
+        <div class="ip-title">{{ consultation.predicted_disease }}</div>
+        <div class="ip-sub">
+          {% if is_patient %}Consulting Dr. {{ consultation.doctor.name }}{% else %}Patient: {{ consultation.patient.name }}{% endif %}
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">Disease</span>
+          <span class="info-value text-teal">{{ consultation.predicted_disease }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Confidence</span>
+          <span class="info-value">{{ consultation.confident_score }}%</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Date</span>
+          <span class="info-value">{{ consultation.date|date:"M d, Y" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Status</span>
+          <span class="info-value {% if consultation.status == 'active' %}status-active{% else %}status-closed{% endif %}">
+            {{ consultation.status }}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Patient Age</span>
+          <span class="info-value">{{ consultation.patient.age }}</span>
+        </div>
+      </div>
+
+      {% if consultation.symptoms_list %}
+      <div class="info-section">
+        <div class="info-label" style="margin-bottom:0.5rem;">Symptoms</div>
+        <div class="sym-chips">
+          {% for sym in consultation.symptoms_list %}
+          <span class="sym-chip">{{ sym|cut:'_'|title }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Top predictions -->
+      {% if consultation.top_predictions %}
+      <div class="info-section">
+        <div class="info-label" style="margin-bottom:0.5rem;">Predictions</div>
+        {% for item in consultation.top_predictions %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0;font-size:0.8125rem;">
+          <span style="color:var(--text-secondary);">{{ forloop.counter }}. {{ item.0|default:item }}</span>
+          <span style="color:var(--brand-teal);font-weight:600;">{{ item.1|default:'' }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="info-actions">
+        {% if is_patient and not already_rated and consultation.status == 'closed' %}
+        <a href="{% url 'rate_doctor' consultation.pk %}" class="btn btn-outline-teal btn-pill btn-sm">⭐ Rate Dr. {{ consultation.doctor.name }}</a>
+        {% endif %}
+        {% if is_patient %}
+        <a href="{% url 'doctor_profile' consultation.doctor.user.username %}" class="btn btn-secondary btn-sm btn-pill">View Doctor Profile</a>
+        {% endif %}
+        {% if is_doctor %}
+        <a href="{% url 'patient_profile' consultation.patient.user.username %}" class="btn btn-secondary btn-sm btn-pill">View Patient Profile</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right: tabs -->
+    <div class="consult-right">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn {% if consultation.consult_type != 'video' %}active{% endif %}" onclick="showTab('chat',this)">💬 Chat</button>
+        {% if consultation.consult_type == 'video' %}
+        <button class="tab-btn active" onclick="showTab('video',this)">🎥 Video Call</button>
+        {% endif %}
+        <button class="tab-btn" onclick="showTab('ai',this)">🤖 AI Assistant</button>
+      </div>
+
+      <!-- CHAT TAB -->
+      <div class="tab-pane {% if consultation.consult_type != 'video' %}active{% endif %}" id="tab-chat">
+        <div class="chat-box">
+          <div class="chat-header">
+            <div class="chat-status" id="wsStatus"></div>
+            <div>
+              <div class="chat-header-title">Chat Box</div>
+              <div class="chat-header-sub" id="chatWith">
+                {% if is_patient %}Dr. {{ consultation.doctor.name }}{% else %}{{ consultation.patient.name }}{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="typing-indicator" id="typingIndicator"></div>
+          <div class="messages-area" id="messagesArea">
+            {% if messages_qs %}
+              {% for msg in messages_qs %}
+              <div class="msg-wrap {% if msg.sender == request.user %}mine{% endif %}" id="msg-{{ msg.id }}">
+                <div class="msg-bubble {% if msg.sender == request.user %}mine{% elif msg.is_ai %}ai-msg{% else %}them{% endif %}">
+                  {{ msg.message }}
+                </div>
+                <div class="msg-meta">
+                  <span>{% if msg.is_ai %}🤖 AI{% else %}{{ msg.sender.username }}{% endif %}</span>
+                  <span>{{ msg.timestamp|date:"H:i" }}</span>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+            <div class="empty-chat">
+              <div style="font-size:2.5rem;margin-bottom:0.75rem;">👋</div>
+              <div style="font-weight:600;color:var(--text-secondary);">No messages yet</div>
+              <p style="font-size:0.875rem;margin-top:0.25rem;">Say hello to start the conversation!</p>
+            </div>
+            {% endif %}
+          </div>
+          {% if consultation.status == 'active' %}
+          <div class="chat-input-bar">
+            <textarea class="chat-input" id="msgInput" placeholder="Type a message…" rows="1"
+              onkeydown="handleKey(event)" oninput="sendTyping(); autoResize(this)"></textarea>
+            <button class="btn btn-primary" style="border-radius:var(--radius-lg);padding:0.625rem 1rem;" onclick="sendMessage()">
+              Send ↗
+            </button>
+          </div>
+          {% else %}
+          <div style="padding:0.875rem;text-align:center;font-size:0.875rem;color:var(--text-muted);border-top:1px solid var(--border);">
+            This consultation is closed.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- VIDEO TAB -->
+      {% if consultation.consult_type == 'video' %}
+      <div class="tab-pane active" id="tab-video">
+        <div class="video-panel">
+          <div class="video-header">
+            <div>
+              <div style="font-weight:700;">🎥 Video Consultation</div>
+              <div style="font-size:0.8125rem;color:var(--text-muted);">Channel: {{ consultation.video_channel }}</div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="joinVideoBtn" onclick="joinVideoCall()">Join Call</button>
+          </div>
+          <div class="video-area" id="videoArea">
+            {% if agora_app_id %}
+              <div id="localVideo"><div class="video-label">You</div></div>
+              <div id="remoteVideo"><div class="video-label">
+                {% if is_patient %}Dr. {{ consultation.doctor.name }}{% else %}{{ consultation.patient.name }}{% endif %}
+              </div></div>
+            {% else %}
+              <div class="video-no-agora">
+                <div style="font-size:3rem;margin-bottom:1rem;">🎥</div>
+                <div style="font-weight:600;color:#fff;margin-bottom:0.5rem;">Video Consultation</div>
+                <p>To enable video calls, add your Agora credentials to .env:<br>
+                  <code style="font-size:0.8125rem;color:#7EC8E3;">AGORA_APP_ID=...<br>AGORA_APP_CERT=...</code></p>
+                <p style="margin-top:1rem;">Get free keys at <a href="https://console.agora.io" target="_blank" style="color:#7EC8E3;">console.agora.io</a></p>
+              </div>
+            {% endif %}
+          </div>
+          {% if agora_app_id %}
+          <div class="video-controls">
+            <button class="vid-btn" style="background:#374151;" onclick="toggleMic()" id="micBtn" title="Mute/Unmute">🎤</button>
+            <button class="vid-btn" style="background:#374151;" onclick="toggleCam()" id="camBtn" title="Camera on/off">📷</button>
+            <button class="vid-btn" style="background:#EF4444;" onclick="endCall()" title="End call">📵</button>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- AI ASSISTANT TAB -->
+      <div class="tab-pane" id="tab-ai">
+        <div class="ai-panel">
+          <div class="ai-header">
+            <span style="font-size:1.5rem;">🤖</span>
+            <div>
+              <div class="ai-header-title">AI Medical Assistant</div>
+              <div class="ai-header-sub">Ask anything about {{ consultation.predicted_disease }}</div>
+            </div>
+          </div>
+          <div class="ai-messages" id="aiMessages">
+            <div class="ai-msg-ai">
+              Hello! I'm your AI medical assistant. I know you've been diagnosed with a possible <strong>{{ consultation.predicted_disease }}</strong>.
+              Feel free to ask me anything about this condition, symptoms, medications, or general health questions.
+              <br><em style="font-size:0.8rem;opacity:0.75;display:block;margin-top:0.5rem;">⚠️ I provide general information only. Always follow your doctor's advice.</em>
+            </div>
+          </div>
+          <div class="ai-suggestions">
+            <button class="ai-suggest-btn" onclick="askAI(this.textContent)">What causes {{ consultation.predicted_disease }}?</button>
+            <button class="ai-suggest-btn" onclick="askAI(this.textContent)">Common treatments?</button>
+            <button class="ai-suggest-btn" onclick="askAI(this.textContent)">Prevention tips</button>
+            <button class="ai-suggest-btn" onclick="askAI(this.textContent)">When to see a doctor urgently?</button>
+          </div>
+          <div class="ai-input-bar">
+            <input type="text" class="form-control" id="aiInput" placeholder="Ask the AI assistant…"
+              onkeydown="if(event.key==='Enter'){askAI(document.getElementById('aiInput').value);}">
+            <button class="btn btn-primary" style="border-radius:var(--radius-lg);"
+              onclick="askAI(document.getElementById('aiInput').value)">Ask →</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- .consult-right -->
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CONSULT_ID = {{ consultation.id }};
+const MY_USERNAME = "{{ request.user.username }}";
+const STATUS = "{{ consultation.status }}";
+
+// ── Tabs ─────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id)?.classList.add('active');
+  btn.classList.add('active');
+  if (id === 'chat') setTimeout(() => scrollMessages(), 50);
+}
+
+// ── Scroll helpers ───────────────────────────────────────────────
+function scrollMessages() {
+  const area = document.getElementById('messagesArea');
+  if (area) area.scrollTop = area.scrollHeight;
+}
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+scrollMessages();
+
+// ── WebSocket ────────────────────────────────────────────────────
+let socket = null;
+let typingTimer = null;
+const wsStatus = document.getElementById('wsStatus');
+
+if (STATUS === 'active') {
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  socket = new WebSocket(`${proto}://${window.location.host}/ws/chat/${CONSULT_ID}/`);
+
+  socket.onopen = () => {
+    wsStatus.style.background = '#22C55E';
+    wsStatus.title = 'Connected';
+  };
+  socket.onclose = () => {
+    wsStatus.style.background = '#EF4444';
+    wsStatus.title = 'Disconnected';
+  };
+  socket.onerror = () => { wsStatus.style.background = '#F59E0B'; };
+
+  socket.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === 'message') {
+      appendMessage(data.sender, data.message, data.timestamp, data.msg_id);
+    } else if (data.type === 'typing') {
+      const el = document.getElementById('typingIndicator');
+      el.textContent = data.sender + ' is typing…';
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => el.textContent='', 2000);
+    }
+  };
+}
+
+function appendMessage(sender, message, timestamp, msgId) {
+  const area = document.getElementById('messagesArea');
+  const empty = area.querySelector('.empty-chat');
+  if (empty) empty.remove();
+
+  const isMine = sender === MY_USERNAME;
+  const div = document.createElement('div');
+  div.className = `msg-wrap ${isMine ? 'mine' : ''}`;
+  div.id = 'msg-' + (msgId || Date.now());
+  div.innerHTML = `
+    <div class="msg-bubble ${isMine ? 'mine' : 'them'}">${escHtml(message)}</div>
+    <div class="msg-meta"><span>${sender}</span><span>${timestamp}</span></div>`;
+  area.appendChild(div);
+  scrollMessages();
+}
+
+function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const msg = input.value.trim();
+  if (!msg || !socket || socket.readyState !== WebSocket.OPEN) return;
+  socket.send(JSON.stringify({ type:'message', message: msg }));
+  input.value = ''; input.style.height = 'auto';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+let typingSent = false;
+function sendTyping() {
+  if (!socket || socket.readyState !== WebSocket.OPEN || typingSent) return;
+  socket.send(JSON.stringify({ type:'typing' }));
+  typingSent = true;
+  setTimeout(() => typingSent=false, 1500);
+}
+
+// ── AI Assistant ─────────────────────────────────────────────────
+async function askAI(question) {
+  if (!question || !question.trim()) return;
+  const q = question.trim();
+  const msgs = document.getElementById('aiMessages');
+  const input = document.getElementById('aiInput');
+  input.value = '';
+
+  // User bubble
+  const uDiv = document.createElement('div');
+  uDiv.className = 'ai-msg-user'; uDiv.textContent = q;
+  msgs.appendChild(uDiv);
+
+  // Typing dots
+  const tDiv = document.createElement('div');
+  tDiv.className = 'ai-typing';
+  tDiv.innerHTML = '<div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div>';
+  msgs.appendChild(tDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const resp = await fetch(`/api/ai-chat/${CONSULT_ID}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ question: q }),
+    });
+    const data = await resp.json();
+    tDiv.remove();
+    const aDiv = document.createElement('div');
+    aDiv.className = 'ai-msg-ai'; aDiv.textContent = data.answer || 'Sorry, no response.';
+    msgs.appendChild(aDiv);
+  } catch(err) {
+    tDiv.remove();
+    const eDiv = document.createElement('div');
+    eDiv.className = 'ai-msg-ai'; eDiv.textContent = 'Error connecting to AI. Please try again.';
+    msgs.appendChild(eDiv);
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function getCookie(name) {
+  const v = `; ${document.cookie}`.split(`; ${name}=`);
+  if (v.length === 2) return v.pop().split(';').shift();
+  return '';
+}
+
+// ── Agora Video (basic stub) ─────────────────────────────────────
+{% if agora_app_id %}
+const AGORA_APP_ID     = "{{ agora_app_id }}";
+const VIDEO_CHANNEL    = "{{ consultation.video_channel }}";
+const VIDEO_TOKEN      = "{% if is_patient %}{{ consultation.video_token_patient }}{% else %}{{ consultation.video_token_doctor }}{% endif %}";
+const UID = {{ request.user.id }};
+
+let agoraClient, localTracks = {}, isMicOn = true, isCamOn = true;
+
+async function joinVideoCall() {
+  if (typeof AgoraRTC === 'undefined') {
+    alert('Agora SDK not loaded. Add the Agora CDN script to base.html.');
+    return;
+  }
+  document.getElementById('joinVideoBtn').innerHTML = 'Joining…';
+  agoraClient = AgoraRTC.createClient({ mode:'rtc', codec:'vp8' });
+  await agoraClient.join(AGORA_APP_ID, VIDEO_CHANNEL, VIDEO_TOKEN || null, UID);
+
+  localTracks.audio = await AgoraRTC.createMicrophoneAudioTrack();
+  localTracks.video = await AgoraRTC.createCameraVideoTrack();
+  localTracks.video.play('localVideo');
+  await agoraClient.publish(Object.values(localTracks));
+
+  agoraClient.on('user-published', async (user, type) => {
+    await agoraClient.subscribe(user, type);
+    if (type === 'video') user.videoTrack.play('remoteVideo');
+    if (type === 'audio') user.audioTrack.play();
+  });
+  document.getElementById('joinVideoBtn').textContent = 'Leave Call';
+  document.getElementById('joinVideoBtn').onclick = endCall;
+}
+
+async function toggleMic() {
+  if (!localTracks.audio) return;
+  isMicOn = !isMicOn;
+  await localTracks.audio.setEnabled(isMicOn);
+  document.getElementById('micBtn').textContent = isMicOn ? '🎤' : '🔇';
+}
+async function toggleCam() {
+  if (!localTracks.video) return;
+  isCamOn = !isCamOn;
+  await localTracks.video.setEnabled(isCamOn);
+  document.getElementById('camBtn').textContent = isCamOn ? '📷' : '📷';
+}
+async function endCall() {
+  if (localTracks.audio) { localTracks.audio.stop(); localTracks.audio.close(); }
+  if (localTracks.video) { localTracks.video.stop(); localTracks.video.close(); }
+  if (agoraClient) await agoraClient.leave();
+  document.getElementById('joinVideoBtn').textContent = 'Join Call';
+  document.getElementById('joinVideoBtn').onclick = joinVideoCall;
+}
+{% endif %}
+</script>
+{% if agora_app_id %}
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
+{% endif %}
+{% endblock %}

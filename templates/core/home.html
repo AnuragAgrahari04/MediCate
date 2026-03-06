@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% block title %}Medicate — AI Disease Prediction & Doctor Consultation{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── HERO ──────────────────────────────────────────────────────── */
+.hero {
+  min-height: calc(100vh - 64px);
+  display: flex; align-items: center;
+  padding: 5rem 1.5rem;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 800px 600px at 70% 50%, rgba(13,155,138,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 400px at 20% 80%, rgba(15,41,82,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-grid {
+  max-width: 1200px; margin: 0 auto; width: 100%;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: rgba(13,155,138,0.1); border: 1px solid rgba(13,155,138,0.25);
+  color: var(--brand-teal); font-size: 0.8125rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.375rem 0.875rem; border-radius: var(--radius-pill);
+  margin-bottom: 1.25rem;
+}
+.hero h1 {
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  line-height: 1.1; letter-spacing: -0.02em;
+  margin-bottom: 1.25rem;
+}
+.hero h1 em { font-style: italic; color: var(--brand-teal); }
+.hero-desc {
+  font-size: 1.125rem; color: var(--text-secondary);
+  max-width: 520px; margin-bottom: 2rem; line-height: 1.7;
+}
+.hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+.hero-stats {
+  display: flex; gap: 2rem; margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+.hero-stat-num  { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); }
+.hero-stat-label{ font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.125rem; }
+
+/* ── HERO VISUAL ─────────────────────────────────────────────── */
+.hero-visual {
+  display: flex; justify-content: center; align-items: center;
+  position: relative;
+}
+.hero-card-float {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: 1.75rem;
+  box-shadow: var(--shadow-xl); width: 100%; max-width: 380px;
+  animation: floatCard 6s ease-in-out infinite;
+}
+@keyframes floatCard {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+.hc-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+.hc-icon { width: 44px; height: 44px; border-radius: var(--radius-md);
+  background: var(--brand-teal-l); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+.hc-title  { font-weight: 700; font-size: 0.9375rem; color: var(--text-primary); }
+.hc-sub    { font-size: 0.8125rem; color: var(--text-muted); }
+.hc-symptoms { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 1.25rem; }
+.hc-tag {
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);
+  padding: 0.25rem 0.625rem; border-radius: var(--radius-pill);
+}
+.hc-tag.active { background: var(--brand-teal-l); border-color: var(--brand-teal); color: var(--brand-teal); }
+.hc-result { background: var(--brand-teal-l); border: 1px solid rgba(13,155,138,0.2); border-radius: var(--radius-md); padding: 1rem; }
+.hc-disease { font-family: var(--font-display); font-size: 1.125rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+.hc-conf-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.375rem; }
+.hc-conf-label { font-size: 0.75rem; color: var(--text-muted); }
+.hc-conf-val   { font-size: 0.75rem; font-weight: 700; color: var(--brand-teal); }
+
+/* floating badges on hero visual */
+.hv-badge {
+  position: absolute; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 0.625rem 0.875rem; box-shadow: var(--shadow-md);
+  font-size: 0.8125rem; font-weight: 600; color: var(--text-primary);
+  display: flex; align-items: center; gap: 0.5rem;
+  animation: floatBadge 5s ease-in-out infinite;
+}
+.hv-badge:nth-child(2) { top: 0; right: -1rem; animation-delay: -2s; }
+.hv-badge:nth-child(3) { bottom: 1rem; left: -2rem; animation-delay: -3.5s; }
+@keyframes floatBadge {
+  0%,100% { transform: translateY(0) rotate(-1deg); }
+  50%      { transform: translateY(-8px) rotate(1deg); }
+}
+
+/* ── FEATURES ────────────────────────────────────────────────── */
+.features { padding: 5rem 1.5rem; }
+.section-header { text-align: center; max-width: 640px; margin: 0 auto 3.5rem; }
+.section-label {
+  font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--brand-teal); margin-bottom: 0.75rem;
+}
+.features-grid {
+  max-width: 1200px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+}
+.feature-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 2rem;
+  transition: all var(--trans-normal); position: relative; overflow: hidden;
+}
+.feature-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; background: var(--brand-teal); transform: scaleX(0);
+  transform-origin: left; transition: transform var(--trans-normal);
+}
+.feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); border-color: rgba(13,155,138,0.3); }
+.feature-card:hover::before { transform: scaleX(1); }
+.feature-icon {
+  width: 52px; height: 52px; border-radius: var(--radius-md);
+  background: var(--brand-teal-l); display: flex; align-items: center;
+  justify-content: center; font-size: 1.5rem; margin-bottom: 1.25rem;
+}
+.feature-title { font-size: 1.0625rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
+.feature-desc  { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* ── HOW IT WORKS ────────────────────────────────────────────── */
+.how-section { padding: 5rem 1.5rem; background: var(--bg-card); }
+.steps { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(4,1fr); gap: 2rem; position: relative; }
+.steps::before {
+  content: ''; position: absolute; top: 28px; left: 10%; right: 10%; height: 2px;
+  background: linear-gradient(90deg, var(--brand-teal), #0A6D8A, var(--brand-teal));
+}
+.step { text-align: center; position: relative; }
+.step-num {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--brand-teal); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.125rem; font-weight: 800; margin: 0 auto 1rem;
+  position: relative; z-index: 1;
+  box-shadow: 0 0 0 6px var(--bg-card), 0 0 0 8px rgba(13,155,138,0.2);
+}
+.step-title { font-weight: 700; font-size: 0.9375rem; color: var(--text-primary); margin-bottom: 0.375rem; }
+.step-desc  { font-size: 0.8125rem; color: var(--text-muted); }
+
+/* ── CTA ─────────────────────────────────────────────────────── */
+.cta-section {
+  padding: 5rem 1.5rem; text-align: center;
+  background: linear-gradient(135deg, var(--brand-navy) 0%, #1A4A7A 100%);
+  position: relative; overflow: hidden;
+}
+.cta-section::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(13,155,138,0.2) 0%, transparent 70%);
+}
+.cta-section h2 { color: #fff; font-size: clamp(1.75rem, 4vw, 3rem); margin-bottom: 1rem; position: relative; }
+.cta-section p  { color: rgba(255,255,255,0.7); font-size: 1.125rem; margin-bottom: 2rem; position: relative; }
+.cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
+
+@media (max-width: 768px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .hero-visual { display: none; }
+  .features-grid { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: repeat(2,1fr); }
+  .steps::before { display: none; }
+  .hero-stats { gap: 1.5rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ── HERO ─────────────────────────────────────────────────── -->
+<section class="hero" id="home">
+  <div class="hero-grid">
+    <div class="hero-content">
+      <div class="hero-eyebrow">🤖 AI-Powered • 42 Diseases • Real Doctors</div>
+      <h1>
+        <em>Predict</em> your disease.<br>
+        Connect with the<br>
+        <em>right doctor.</em>
+      </h1>
+      <p class="hero-desc">
+        Enter your symptoms, get an instant ML-based disease prediction with confidence score,
+        and connect with the nearest specialist for a live chat or video consultation.
+      </p>
+      <div class="hero-actions">
+        {% if request.user.is_authenticated and request.user.patient_profile %}
+          <a href="{% url 'check_disease' %}" class="btn btn-primary btn-lg btn-pill">
+            🔬 Check Disease
+          </a>
+          <a href="{% url 'patient_dashboard' %}" class="btn btn-secondary btn-lg btn-pill">
+            Dashboard →
+          </a>
+        {% else %}
+          <button class="btn btn-primary btn-lg btn-pill" onclick="openModal('signupModal')">
+            Get Started Free →
+          </button>
+          <button class="btn btn-secondary btn-lg btn-pill" onclick="openModal('signinModal')">
+            Sign In
+          </button>
+        {% endif %}
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-num">42+</div>
+          <div class="hero-stat-label">Diseases Detected</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">132</div>
+          <div class="hero-stat-label">Symptom Inputs</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">97%</div>
+          <div class="hero-stat-label">ML Accuracy</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">📍</div>
+          <div class="hero-stat-label">Location-based Matching</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hv-badge" style="top:0;right:-1rem;">
+        <span>📍</span> Doctor found 2.3 km away
+      </div>
+      <div class="hero-card-float">
+        <div class="hc-header">
+          <div class="hc-icon">🔬</div>
+          <div>
+            <div class="hc-title">Disease Prediction</div>
+            <div class="hc-sub">ML Analysis Complete</div>
+          </div>
+        </div>
+        <div class="hc-symptoms">
+          <span class="hc-tag active">chest_pain</span>
+          <span class="hc-tag active">breathlessness</span>
+          <span class="hc-tag active">fatigue</span>
+          <span class="hc-tag active">sweating</span>
+          <span class="hc-tag">headache</span>
+          <span class="hc-tag">nausea</span>
+        </div>
+        <div class="hc-result">
+          <div class="hc-disease">Possible: Heart Condition</div>
+          <div class="hc-conf-row">
+            <span class="hc-conf-label">Confidence Score</span>
+            <span class="hc-conf-val">94.5%</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" style="width:94.5%"></div>
+          </div>
+          <div style="margin-top:0.875rem;display:flex;gap:0.5rem;align-items:center;">
+            <span class="badge badge-teal">Cardiologist</span>
+            <span style="font-size:0.75rem;color:var(--text-muted);">3 nearby doctors</span>
+          </div>
+        </div>
+      </div>
+      <div class="hv-badge" style="bottom:1rem;left:-2rem;">
+        <span>💬</span> Chat consultation active
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ──────────────────────────────────────────────── -->
+<section class="features" id="features">
+  <div class="section-header">
+    <div class="section-label">Why Medicate</div>
+    <h2>Everything you need for smarter healthcare</h2>
+    <p>An end-to-end platform from symptom input to specialist consultation.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <div class="feature-title">AI Disease Prediction</div>
+      <p class="feature-desc">Random Forest ML model trained on 132 symptoms predicts 42 diseases with up to 97% accuracy. See top-5 possible conditions with confidence scores.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📍</div>
+      <div class="feature-title">Location-Based Matching</div>
+      <p class="feature-desc">Enter your address and our system finds the 5 nearest verified specialists using real geocoding. Distance is calculated and shown for every doctor.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💬</div>
+      <div class="feature-title">Real-Time Chat</div>
+      <p class="feature-desc">WebSocket-powered live consultation chat between patient and doctor. Messages delivered instantly with typing indicators and timestamp.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎥</div>
+      <div class="feature-title">Video Consultation</div>
+      <p class="feature-desc">Optional video call for face-to-face consultation with your doctor using Agora SDK. No app download required — works directly in the browser.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-title">AI Medical Assistant</div>
+      <p class="feature-desc">Ask medical questions inside any consultation and get AI-powered answers from Gemini Flash. Context-aware based on your current diagnosis.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⭐</div>
+      <div class="feature-title">Ratings & History</div>
+      <p class="feature-desc">Complete consultation history for both patients and doctors. Rate and review doctors after each consultation to maintain quality.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ──────────────────────────────────────────── -->
+<section class="how-section" id="how-it-works">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-header">
+      <div class="section-label">How It Works</div>
+      <h2>From symptoms to specialist in 4 steps</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Enter Symptoms</div>
+        <p class="step-desc">Select from 132 searchable symptoms using our interactive picker.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Get Prediction</div>
+        <p class="step-desc">Our ML model predicts your likely disease with a confidence percentage.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Find Doctors</div>
+        <p class="step-desc">Top-5 specialist doctors near your location are recommended instantly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Consult</div>
+        <p class="step-desc">Chat or video call with your chosen doctor. Get AI assistance anytime.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ───────────────────────────────────────────────────── -->
+<section class="cta-section">
+  <h2>Ready to take control of your health?</h2>
+  <p>Join Medicate and get instant, intelligent medical guidance.</p>
+  <div class="cta-actions">
+    <button class="btn btn-primary btn-lg btn-pill" onclick="openModal('signupModal')" style="background:#fff;color:var(--brand-navy);">
+      Sign Up Free →
+    </button>
+    <button class="btn btn-lg btn-pill" onclick="openModal('signinModal')" style="border:2px solid rgba(255,255,255,0.4);color:#fff;background:transparent;">
+      Already have an account
+    </button>
+  </div>
+</section>
+{% endblock %}
