@@ -5,6 +5,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt &&
       python manage.py collectstatic --noinput &&
+      python manage.py migrate &&
       python ml/predictor.py
     startCommand: daphne -b 0.0.0.0 -p $PORT medicate.asgi:application
     envVars:
@@ -23,6 +24,7 @@ services:
           property: connectionString
       - key: PYTHON_VERSION
         value: "3.12.1"
+      # Keys you'll fill in the Render Dashboard after first deploy
       - key: AGORA_APP_ID
         sync: false
       - key: AGORA_APP_CERT
@@ -32,10 +34,14 @@ services:
       - key: GOOGLE_MAPS_KEY
         sync: false
 
+# PostgreSQL goes here
 databases:
   - name: medicate-db
     databaseName: medicate
     user: medicate
 
+# REDIS GOES HERE (Separate section)
+redis:
   - name: medicate-redis
-    type: redis
+    plan: free
+    ipAllowList: [] # Allows only internal access for security
