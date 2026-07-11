@@ -2,7 +2,7 @@
 
 **Be your own doctor** — AI-powered disease prediction, location-based doctor matching, real-time OSM doctor discovery, WebSocket chat, video consultation, and AI medical assistant.
 
-🌐 **Live Demo**: (add your Render URL here)
+🌐 **Live Demo**: https://medicate-moa4.onrender.com
 
 ---
 
