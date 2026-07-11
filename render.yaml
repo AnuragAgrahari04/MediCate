@@ -8,21 +8,23 @@ services:
     startCommand: "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p $PORT medicate.asgi:application"
     autoDeploy: true
     envVars:
-      # ── Core Django ────────────────────────────────────────────────
+      # -- Core Django -----------------------------------------------
+      - key: PYTHON_VERSION
+        value: "3.12.1"
       - key: DEBUG
         value: "False"
       - key: SECRET_KEY
-        sync: false          # Set in Render dashboard — never commit
+        sync: false
       - key: ALLOWED_HOSTS
-        sync: false          # e.g. medicate.onrender.com
+        sync: false
       - key: CSRF_TRUSTED_ORIGINS
-        sync: false          # e.g. https://medicate.onrender.com
+        sync: false
 
-      # ── Database ───────────────────────────────────────────────────
+      # -- Database --------------------------------------------------
       - key: DATABASE_URL
-        sync: false          # Paste Supabase postgres:// URL
+        sync: false
 
-      # ── Cloudinary (Media Storage) ─────────────────────────────────
+      # -- Cloudinary (Media Storage) --------------------------------
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -30,22 +32,22 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
 
-      # ── Email (Gmail SMTP) ─────────────────────────────────────────
+      # -- Email (Gmail SMTP) ----------------------------------------
       - key: EMAIL_HOST_USER
         sync: false
       - key: EMAIL_HOST_PASSWORD
         sync: false
 
-      # ── Video (Daily.co) ───────────────────────────────────────────
+      # -- Video (Daily.co) ------------------------------------------
       - key: DAILY_API_KEY
         sync: false
 
-      # ── Video (Agora) ──────────────────────────────────────────────
+      # -- Video (Agora) ---------------------------------------------
       - key: AGORA_APP_ID
         sync: false
       - key: AGORA_APP_CERT
         sync: false
 
-      # ── AI (OpenRouter) ────────────────────────────────────────────
+      # -- AI (OpenRouter) -------------------------------------------
       - key: OPENROUTER_API_KEY
         sync: false
