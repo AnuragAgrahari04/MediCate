@@ -69,7 +69,7 @@ Ref #    : {appointment_id}
 
 Please log in to your dashboard to Accept or Reject this appointment.
 
-👉 http://127.0.0.1:8000/doctor-appointments/
+👉 https://medicate-moa4.onrender.com/doctor-appointments/
 
 — The MediCate Team
 """
@@ -109,7 +109,7 @@ Your payment will be refunded within 5–7 business days.
 
 Please book another slot at your convenience.
 
-👉 http://127.0.0.1:8000/find-doctors/
+👉 https://medicate-moa4.onrender.com/find-doctors/
 
 — The MediCate Team
 """
@@ -134,7 +134,7 @@ Welcome to MediCate! Your email has been verified successfully.
 {"• Book appointments with verified doctors" if role == "patient" else "• Conduct video consultations with patients"}
 {"• Consult via secure video calls" if role == "patient" else "• Receive consultation fees securely"}
 
-Get started: http://127.0.0.1:8000/
+Get started: https://medicate-moa4.onrender.com/
 
 — The MediCate Team
 """

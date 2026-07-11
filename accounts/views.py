@@ -72,7 +72,7 @@ def signup_doctor(request):
             city=d.get('city',''), state=d.get('state',''),
             pincode=d.get('pincode',''), country=d.get('country','India'),
             video_consult_enabled=d.get('video_consult_enabled', True),
-            video_consult_fee=d.get('video_consult_fee', 0),
+            video_consult_fee=d.get('video_consult_fee') or 0,
             chat_consult=d.get('chat_consult', True),
             latitude=lat, longitude=lon,
             is_verified=False,
