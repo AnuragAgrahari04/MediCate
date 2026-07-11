@@ -1,0 +1,640 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Book Appointment — {% if doctor.name|slice:":3" == "Dr." %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %} — MediCate{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Page shell ───────────────────────────────────────── */
+.bk-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+/* ── Doctor header card ───────────────────────────────── */
+.bk-doc-card {
+  background: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: var(--radius-card);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 4px 4px 0 var(--black);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.bk-doc-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2.5px solid var(--black);
+  object-fit: cover;
+  background: var(--grey-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.bk-doc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.bk-doc-name {
+  font-family: var(--font);
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--black);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+.bk-doc-sub {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--grey);
+  margin-top: 2px;
+}
+.bk-doc-fee {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+.bk-doc-fee-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--grey);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.bk-doc-fee-val {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--black);
+}
+
+/* ── Section card wrapper ─────────────────────────────── */
+.bk-card {
+  background: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: var(--radius-card);
+  box-shadow: 4px 4px 0 var(--black);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+.bk-card-header {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 2.5px solid var(--black);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--grey);
+  background: var(--grey-light);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Date strip ───────────────────────────────────────── */
+.bk-date-strip {
+  display: flex;
+  gap: 8px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.bk-date-strip::-webkit-scrollbar { display: none; }
+
+.bk-date-pill {
+  flex-shrink: 0;
+  width: 58px;
+  border: 2px solid var(--grey-border);
+  border-radius: 12px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--white);
+  position: relative;
+}
+.bk-date-pill:hover {
+  border-color: var(--black);
+  box-shadow: 2px 2px 0 var(--black);
+  transform: translate(-1px, -1px);
+}
+.bk-date-pill.active {
+  background: var(--blue);
+  border-color: var(--black);
+  box-shadow: 3px 3px 0 var(--black);
+  transform: translate(-1px, -1px);
+}
+.bk-date-pill.active .bk-date-day,
+.bk-date-pill.active .bk-date-num,
+.bk-date-pill.active .bk-date-month {
+  color: var(--white) !important;
+}
+.bk-date-today-dot {
+  position: absolute;
+  bottom: 5px; left: 50%;
+  transform: translateX(-50%);
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--yellow);
+  border: 1.5px solid var(--black);
+}
+.bk-date-day   { font-size: 0.6rem;  font-weight: 800; color: var(--grey); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+.bk-date-num   { font-size: 1.2rem;  font-weight: 900; color: var(--black); line-height: 1; }
+.bk-date-month { font-size: 0.6rem;  font-weight: 700; color: var(--grey); margin-top: 2px; }
+
+/* ── Slot panel ───────────────────────────────────────── */
+.bk-slots-panel {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+/* Period label (Morning/Afternoon/Evening) */
+.bk-period {
+  margin-bottom: 1rem;
+}
+.bk-period-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: var(--grey);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.bk-period-icon { font-size: 0.9rem; }
+
+/* Slot grid */
+.bk-slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Individual slot button */
+.bk-slot {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: 2px solid var(--grey-border);
+  background: var(--white);
+  color: var(--black);
+  transition: all 0.15s;
+  font-family: var(--font);
+  letter-spacing: 0.01em;
+}
+.bk-slot:hover:not(.bk-slot-booked) {
+  border-color: var(--blue);
+  color: var(--blue);
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 var(--blue);
+}
+.bk-slot.bk-slot-selected {
+  background: var(--blue);
+  border-color: var(--black);
+  color: var(--white);
+  box-shadow: 3px 3px 0 var(--black);
+  transform: translate(-1px, -1px);
+}
+.bk-slot.bk-slot-booked {
+  background: var(--grey-light);
+  border-color: var(--grey-border);
+  color: var(--grey);
+  cursor: not-allowed;
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Empty period message */
+.bk-period-empty {
+  font-size: 0.78rem;
+  color: var(--grey);
+  font-weight: 600;
+  padding: 6px 0;
+}
+
+/* No slots at all message */
+.bk-no-slots {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--grey);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ── Legend ───────────────────────────────────────────── */
+.bk-legend {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 2px solid var(--grey-light);
+  flex-wrap: wrap;
+}
+.bk-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--grey);
+}
+.bk-legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--black);
+}
+
+/* ── Confirmation bar ─────────────────────────────────── */
+.bk-confirm-bar {
+  background: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: var(--radius-card);
+  box-shadow: 4px 4px 0 var(--black);
+  padding: 1.25rem 1.5rem;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.bk-confirm-bar.visible {
+  display: flex;
+}
+.bk-confirm-info {}
+.bk-confirm-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--grey);
+  margin-bottom: 3px;
+}
+.bk-confirm-slot {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--black);
+}
+.bk-confirm-fee {
+  font-size: 0.85rem;
+  color: var(--grey);
+  font-weight: 700;
+  margin-top: 2px;
+}
+.bk-confirm-btn {
+  background: var(--yellow);
+  color: var(--black);
+  border: 2.5px solid var(--black);
+  border-radius: var(--radius-pill);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--black);
+  transition: all 0.15s;
+  font-family: var(--font);
+  flex-shrink: 0;
+}
+.bk-confirm-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--black);
+}
+.bk-confirm-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--black);
+}
+.bk-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Hidden form */
+#bkForm { display: none; }
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 480px) {
+  .bk-doc-card { flex-wrap: wrap; }
+  .bk-slot { padding: 7px 11px; font-size: 0.75rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bk-page">
+
+  {# ── Doctor header ── #}
+  <div class="bk-doc-card">
+    <div class="bk-doc-avatar">
+      {% if doctor.img %}
+        <img src="{{ doctor.img.url }}" alt="{% if doctor.name|slice:":3" == "Dr." %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %}">
+      {% else %}
+        <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:1.5rem;background:#f0f0f0;border-radius:50%;">
+          {% if doctor.gender == 'female' %}👩⚕️{% else %}👨⚕️{% endif %}
+        </div>
+      {% endif %}
+    </div>
+    <div>
+      <div class="bk-doc-name">{% if doctor.name|slice:":3" == "Dr." %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %}</div>
+      <div class="bk-doc-sub">
+        {{ doctor.specialization }}
+        {% if doctor.experience_yrs %} · {{ doctor.experience_yrs }} yrs exp{% endif %}
+        {% if doctor.hospital_name %} · {{ doctor.hospital_name }}{% endif %}
+      </div>
+      {% if doctor.available_from and doctor.available_to %}
+      <div class="bk-doc-sub" style="margin-top:4px;">
+        🕐 Available {{ doctor.available_from|time:"g:i A" }} – {{ doctor.available_to|time:"g:i A" }}
+      </div>
+      {% endif %}
+    </div>
+    <div class="bk-doc-fee">
+      <div class="bk-doc-fee-label">VIDEO CONSULTATION FEE</div>
+      <div class="bk-doc-fee-val">{% if doctor.video_consult_fee %}₹{{ doctor.video_consult_fee }}{% else %}Free{% endif %}</div>
+    </div>
+  </div>
+
+  {# ── Date strip ── #}
+  <div class="bk-card">
+    <div class="bk-card-header">
+      📅 &nbsp;Select a date
+    </div>
+    <div class="bk-date-strip" id="dateStrip">
+      {% for day in day_slots %}
+      <div
+        class="bk-date-pill {% if forloop.first %}active{% endif %}"
+        id="datePill-{{ day.date_str }}"
+        onclick="selectDate('{{ day.date_str }}')"
+        title="{{ day.date_str }}"
+      >
+        <div class="bk-date-day">{{ day.day_name }}</div>
+        <div class="bk-date-num">{{ day.day_num }}</div>
+        <div class="bk-date-month">{{ day.month }}</div>
+        {% if day.is_today %}<div class="bk-date-today-dot"></div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── Slot panels (one per day, shown/hidden via JS) ── #}
+  {% for day in day_slots %}
+  <div
+    class="bk-card"
+    id="slotPanel-{{ day.date_str }}"
+    style="{% if not forloop.first %}display:none;{% endif %}"
+  >
+    <div class="bk-card-header" style="display:flex;align-items:center;gap:8px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      Available slots —
+      {% if day.is_today %}Today{% else %}{{ day.day_name|title }}, {{ day.day_num }} {{ day.month }}{% endif %}
+    </div>
+
+    <div class="bk-slots-panel">
+
+      {% if not day.morning and not day.afternoon and not day.evening %}
+        <div class="bk-no-slots">
+          No slots available for this day.
+        </div>
+
+      {% else %}
+
+        {# Morning #}
+        {% if day.morning %}
+        <div class="bk-period">
+          <div class="bk-period-label">
+            <span class="bk-period-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></span>
+            Morning &nbsp;—&nbsp; before 12:00 PM
+          </div>
+          <div class="bk-slot-grid">
+            {% for slot in day.morning %}
+            <button
+              type="button"
+              class="bk-slot {% if slot.booked %}bk-slot-booked{% endif %}"
+              {% if not slot.booked %}
+              onclick="selectSlot('{{ day.date_str }}', '{{ slot.time_str }}', '{{ slot.label }}', this)"
+              {% endif %}
+              id="slot-{{ day.date_str }}-{{ slot.time_str }}"
+              {% if slot.booked %}disabled title="Already booked"{% endif %}
+            >
+              {{ slot.label }}
+              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Full{% else %}{{ slot.spots }} spot{{ slot.spots|pluralize }} left{% endif %}</small>
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {# Afternoon #}
+        {% if day.afternoon %}
+        <div class="bk-period">
+          <div class="bk-period-label">
+            <span class="bk-period-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg></span>
+            Afternoon &nbsp;—&nbsp; 12:00 PM to 5:00 PM
+          </div>
+          <div class="bk-slot-grid">
+            {% for slot in day.afternoon %}
+            <button
+              type="button"
+              class="bk-slot {% if slot.booked %}bk-slot-booked{% endif %}"
+              {% if not slot.booked %}
+              onclick="selectSlot('{{ day.date_str }}', '{{ slot.time_str }}', '{{ slot.label }}', this)"
+              {% endif %}
+              id="slot-{{ day.date_str }}-{{ slot.time_str }}"
+              {% if slot.booked %}disabled title="Already booked"{% endif %}
+            >
+              {{ slot.label }}
+              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Full{% else %}{{ slot.spots }} spot{{ slot.spots|pluralize }} left{% endif %}</small>
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {# Evening #}
+        {% if day.evening %}
+        <div class="bk-period">
+          <div class="bk-period-label">
+            <span class="bk-period-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+            Evening &nbsp;—&nbsp; after 5:00 PM
+          </div>
+          <div class="bk-slot-grid">
+            {% for slot in day.evening %}
+            <button
+              type="button"
+              class="bk-slot {% if slot.booked %}bk-slot-booked{% endif %}"
+              {% if not slot.booked %}
+              onclick="selectSlot('{{ day.date_str }}', '{{ slot.time_str }}', '{{ slot.label }}', this)"
+              {% endif %}
+              id="slot-{{ day.date_str }}-{{ slot.time_str }}"
+              {% if slot.booked %}disabled title="Already booked"{% endif %}
+            >
+              {{ slot.label }}
+              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Full{% else %}{{ slot.spots }} spot{{ slot.spots|pluralize }} left{% endif %}</small>
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+      {% endif %}
+    </div>
+
+    {# Legend #}
+    <div class="bk-legend">
+      <div class="bk-legend-item">
+        <div class="bk-legend-dot" style="background: var(--white);"></div>
+        Available
+      </div>
+      <div class="bk-legend-item">
+        <div class="bk-legend-dot" style="background: var(--blue);"></div>
+        Selected
+      </div>
+      <div class="bk-legend-item">
+        <div class="bk-legend-dot" style="background: var(--grey-light); opacity: 0.6;"></div>
+        Booked
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  {# ── Confirmation bar ── #}
+  <div class="bk-confirm-bar" id="confirmBar">
+    <div class="bk-confirm-info">
+      <div class="bk-confirm-label">Selected appointment</div>
+      <div class="bk-confirm-slot" id="confirmSlotText">—</div>
+      <div class="bk-confirm-fee">
+        <div style="margin-bottom: 8px;">
+          <label style="margin-right:10px;"><input type="radio" name="appt_type_ui" value="video" checked onchange="updateFee()"> In-Person</label>
+          {% if doctor.video_consult_enabled %}
+          <label><input type="radio" name="appt_type_ui" value="video" onchange="updateFee()"> Video Consult</label>
+          {% endif %}
+        </div>
+        <div id="feeDisplay">
+          {% if doctor.video_consult_fee %}Fee: ₹<span id="feeAmount">{{ doctor.video_consult_fee }}</span>{% else %}Free consultation{% endif %}
+          {% if doctor.upi_id %} · Pay via UPI{% endif %}
+        </div>
+      </div>
+    </div>
+    <button class="bk-confirm-btn" id="confirmBtn" onclick="submitBooking()">
+      Confirm &amp; Pay →
+    </button>
+  </div>
+
+  {# Hidden form that submits to the POST handler #}
+  <form method="POST" action="" id="bkForm">
+    {% csrf_token %}
+    <input type="hidden" name="date" id="inputDate">
+    <input type="hidden" name="time" id="inputTime">
+    <input type="hidden" name="appointment_type" id="inputType" value="video">
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Track selected slot
+let selectedDate = null;
+let selectedTime = null;
+let selectedLabel = null;
+
+// The first day in the strip
+const firstDate = "{{ day_slots.0.date_str }}";
+let activeDate = firstDate;
+
+function selectDate(dateStr) {
+  // Hide all slot panels
+  document.querySelectorAll('[id^="slotPanel-"]').forEach(el => el.style.display = 'none');
+  // Remove active from all date pills
+  document.querySelectorAll('.bk-date-pill').forEach(el => el.classList.remove('active'));
+
+  // Show the selected panel
+  const panel = document.getElementById('slotPanel-' + dateStr);
+  if (panel) panel.style.display = 'block';
+
+  // Activate the pill
+  const pill = document.getElementById('datePill-' + dateStr);
+  if (pill) pill.classList.add('active');
+
+  activeDate = dateStr;
+
+  // If switching date, clear the selected slot if it was on a different date
+  if (selectedDate && selectedDate !== dateStr) {
+    clearSelection();
+  }
+}
+
+function selectSlot(dateStr, timeStr, label, btn) {
+  // Clear previously selected slot visual
+  document.querySelectorAll('.bk-slot.bk-slot-selected').forEach(el => {
+    el.classList.remove('bk-slot-selected');
+  });
+
+  // Mark this one as selected
+  btn.classList.add('bk-slot-selected');
+
+  // Store state
+  selectedDate  = dateStr;
+  selectedTime  = timeStr;
+  selectedLabel = label;
+
+  // Build display string e.g. "Sat, Jun 28 · 12:00 PM"
+  const pill = document.getElementById('datePill-' + dateStr);
+  let dayDisplay = '';
+  if (pill) {
+    const dayName  = pill.querySelector('.bk-date-day')?.textContent   || '';
+    const dayNum   = pill.querySelector('.bk-date-num')?.textContent   || '';
+    const dayMonth = pill.querySelector('.bk-date-month')?.textContent || '';
+    dayDisplay = dayName + ', ' + dayMonth + ' ' + dayNum;
+  }
+
+  const displayText = dayDisplay ? dayDisplay + ' · ' + label : label;
+  document.getElementById('confirmSlotText').textContent = displayText;
+
+  // Show confirmation bar
+  const bar = document.getElementById('confirmBar');
+  bar.classList.add('visible');
+  bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function clearSelection() {
+  document.querySelectorAll('.bk-slot.bk-slot-selected').forEach(el => {
+    el.classList.remove('bk-slot-selected');
+  });
+  selectedDate  = null;
+  selectedTime  = null;
+  selectedLabel = null;
+  document.getElementById('confirmBar').classList.remove('visible');
+}
+
+function submitBooking() {
+  if (!selectedDate || !selectedTime) {
+    alert('Please select a time slot first.');
+    return;
+  }
+  document.getElementById('inputDate').value = selectedDate;
+  document.getElementById('inputTime').value = selectedTime;
+  const apptType = document.querySelector('input[name="appt_type_ui"]:checked').value;
+  document.getElementById('inputType').value = apptType;
+  document.getElementById('bkForm').submit();
+}
+
+function updateFee() {
+  const apptType = document.querySelector('input[name="appt_type_ui"]:checked').value;
+  const feeEl = document.getElementById('feeAmount');
+  if (feeEl) {
+    if (apptType === 'video') {
+      feeEl.textContent = '{{ doctor.video_consult_fee|default:0 }}';
+    } else {
+      feeEl.textContent = '{{ doctor.video_consult_fee|default:0 }}';
+    }
+  }
+}
+</script>
+{% endblock %}
+
+
+

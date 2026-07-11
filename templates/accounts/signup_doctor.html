@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Registration — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.signup-page{padding:3rem 1rem;}
+.signup-wrap{max-width:760px;margin:0 auto;}
+.signup-card{overflow:hidden; padding:0;}
+.signup-header{background:var(--brand-teal-l);border-bottom:2.5px solid var(--text-primary);padding:2.25rem 2rem; text-align:center; display:flex; flex-direction:column; align-items:center; gap:0.75rem;}
+.signup-header h2{color:var(--text-primary);font-family:var(--font-display);font-weight:800;font-size:1.75rem;margin:0;}
+.signup-header p{color:var(--text-secondary);font-size:0.875rem;margin:0;font-weight:700;}
+.signup-body{padding:2rem;}
+.form-section-title{font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-secondary);margin:2rem 0 1rem;display:flex;align-items:center;gap:0.5rem;}
+.form-section-title::after{content:'';flex:1;height:2px;background:var(--text-primary);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+.error-list{background:var(--accent-red-l);border:2.5px solid var(--text-primary);border-radius:var(--radius-md);padding:0.875rem 1rem;margin-bottom:1.5rem;font-size:0.875rem;color:var(--text-primary);font-weight:800;box-shadow:3px 3px 0 var(--text-primary);list-style-type:none;}
+.toggle-row{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:var(--bg-card);border:2.5px solid var(--text-primary);border-radius:var(--radius-md);cursor:pointer; font-weight:800; color:var(--text-primary); box-shadow:2px 2px 0 var(--text-primary);}
+.toggle-row label{cursor:pointer;font-size:0.9rem;}
+.toggle-row input[type=checkbox]{width:1.125rem;height:1.125rem;accent-color:var(--brand-teal);cursor:pointer;}
+@media(max-width:600px){.form-row,.form-row-3{grid-template-columns:1fr;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="signup-page">
+  <div class="signup-wrap">
+    <div class="signup-card card-nb">
+      <div class="signup-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--text-primary);"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+        <h2>Register as Doctor</h2>
+        <p>Join Medicate to accept patient consultations and help people near you</p>
+      </div>
+      <div class="signup-body">
+        {% if form.errors %}
+        <ul class="error-list">
+          {% for field in form %}{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}{% endfor %}
+          {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="POST" id="doctorSignup">
+          {% csrf_token %}
+
+          <div class="form-section-title">Account Credentials</div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Username *</label>
+              <input type="text" name="username" class="input-nb" placeholder="e.g. dr_sharma" required style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Full Name *</label>
+              <input type="text" name="name" class="input-nb" placeholder="Dr. Full Name" required style="width:100%;">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label-nb">Email Address *</label>
+            <input type="email" name="email" class="input-nb" placeholder="doctor@hospital.com" required style="width:100%;">
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Password *</label>
+              <input type="password" name="password" class="input-nb" placeholder="Min. 8 characters" required id="pw1" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Confirm Password *</label>
+              <input type="password" name="password2" class="input-nb" placeholder="Repeat password" required id="pw2" style="width:100%;">
+            </div>
+          </div>
+
+          <div class="form-section-title">Professional Details</div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Specialization *</label>
+              <select name="specialization" class="input-nb" required style="width:100%;">
+                <option value="">Select specialization</option>
+                {% for val, label in form.fields.specialization.choices %}
+                  {% if val %}<option value="{{ val }}">{{ label }}</option>{% endif %}
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Qualification</label>
+              <input type="text" name="qualification" class="input-nb" placeholder="e.g. MBBS, MD" style="width:100%;">
+            </div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Experience (years)</label>
+              <input type="number" name="experience_yrs" class="input-nb" placeholder="0" min="0" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Mobile Number</label>
+              <input type="tel" name="mobile_no" class="input-nb" placeholder="+91 …" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Consultation Fee (₹)</label>
+              <input type="number" name="fee" class="input-nb" placeholder="500" min="0" style="width:100%;">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label-nb">Hospital / Clinic Name</label>
+            <input type="text" name="hospital_name" class="input-nb" placeholder="Hospital or clinic name" style="width:100%;">
+          </div>
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label-nb">Bio / About</label>
+            <textarea name="bio" class="input-nb" rows="3" placeholder="Brief description about yourself, specialties, approach…" style="width:100%;resize:none;"></textarea>
+          </div>
+
+          <div class="form-section-title">📍 Clinic Address (for patient matching)</div>
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label-nb">Street Address</label>
+            <input type="text" name="address" class="input-nb" placeholder="Clinic address" style="width:100%;">
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">City *</label>
+              <input type="text" name="city" class="input-nb" placeholder="City" required style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">State</label>
+              <input type="text" name="state" class="input-nb" placeholder="State" style="width:100%;">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Pincode</label>
+              <input type="text" name="pincode" class="input-nb" placeholder="Pincode" maxlength="10" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label class="form-label-nb">Country</label>
+              <input type="text" name="country" class="input-nb" value="India" style="width:100%;">
+            </div>
+          </div>
+
+          <div class="form-section-title">Consultation Options</div>
+          <div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2rem;">
+            <label class="toggle-row">
+              <input type="checkbox" name="chat_consult" checked>
+              <span>Offer Chat Consultations</span>
+            </label>
+            <label class="toggle-row">
+              <input type="checkbox" name="video_consult" checked>
+              <span>Offer Video Consultations</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-nb btn-nb-primary" id="submitBtn" style="width:100%;padding:0.9375rem;font-size:1rem;">
+            Register as Doctor
+          </button>
+        </form>
+
+        <div style="text-align:center;margin-top:1.5rem;font-size:0.875rem;color:var(--text-secondary);font-weight:700;">
+          Already registered? <a href="{% url 'login_doctor' %}" style="color:var(--brand-teal);font-weight:800;text-decoration:underline;">Doctor login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('doctorSignup').addEventListener('submit', function(e) {
+  if (document.getElementById('pw1').value !== document.getElementById('pw2').value) {
+    e.preventDefault(); alert('Passwords do not match!'); return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Registering…'; btn.disabled = true;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% block title %}Appointment Details — MediCate{% endblock %}
+
+{% block extra_css %}
+<style>
+.appt-detail-page {
+  max-width: 640px; margin: 2.5rem auto; padding: 0 1rem 4rem;
+}
+.appt-detail-card {
+  background: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: var(--radius-card);
+  box-shadow: 4px 4px 0 var(--black);
+  overflow: hidden;
+}
+.appt-detail-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem; border-bottom: 2.5px solid var(--black);
+  background: var(--grey-light);
+}
+.appt-detail-title {
+  font-size: 1.3rem; font-weight: 900; color: var(--black);
+  text-transform: uppercase; margin: 0 0 4px;
+  font-family: var(--font);
+}
+.appt-detail-id {
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--grey); font-family: monospace;
+}
+.appt-status-badge {
+  padding: 6px 14px; border-radius: var(--radius-pill);
+  font-size: 0.72rem; font-weight: 900;
+  text-transform: uppercase; border: 2px solid var(--black);
+  white-space: nowrap;
+}
+.status-pending-payment { background: var(--grey-light); color: var(--grey); }
+.status-pending-approval { background: var(--yellow); color: var(--black); }
+.status-accepted { background: #d1fae5; color: #065f46; }
+.status-rejected { background: #fee2e2; color: #7f1d1d; }
+.status-cancelled { background: var(--grey-light); color: var(--grey); }
+.status-completed { background: var(--blue); color: var(--white); }
+
+.appt-detail-body { padding: 1.5rem; }
+.appt-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.appt-info-group label {
+  display: block; font-size: 0.65rem; font-weight: 900;
+  color: var(--grey); text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 4px;
+}
+.appt-info-group .val {
+  font-size: 1rem; font-weight: 800; color: var(--black);
+}
+.appt-info-group .val-sub {
+  font-size: 0.78rem; font-weight: 600; color: var(--grey); margin-top: 2px;
+}
+
+.gate-pass-display {
+  background: var(--grey-light);
+  border: 2.5px dashed var(--black);
+  border-radius: var(--radius-card);
+  padding: 1.5rem; text-align: center; margin-bottom: 1.5rem;
+}
+.gate-pass-display label {
+  font-size: 0.6rem; font-weight: 900; color: var(--grey);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  display: block; margin-bottom: 0.5rem;
+}
+.gate-pass-display .code {
+  font-size: 2.2rem; font-weight: 900; color: var(--blue);
+  letter-spacing: 8px; font-family: monospace;
+}
+.gate-pass-display p {
+  font-size: 0.78rem; color: var(--grey); font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.appt-detail-actions {
+  display: flex; align-items: center; gap: 0.75rem;
+  flex-wrap: wrap; padding-top: 1.25rem;
+  border-top: 2px solid var(--grey-border);
+}
+@media(max-width:480px){
+  .appt-info-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="appt-detail-page">
+
+  <div class="appt-detail-card">
+    <!-- Header -->
+    <div class="appt-detail-header">
+      <div>
+        <h2 class="appt-detail-title">Appointment Details</h2>
+        <div class="appt-detail-id">#{{ appointment.id|stringformat:"06d" }}</div>
+      </div>
+      <span class="appt-status-badge
+        {% if appointment.status == 'pending_payment' %}status-pending-payment
+        {% elif appointment.status == 'confirmed' %}status-accepted
+        {% elif appointment.status == 'rejected' %}status-rejected
+        {% elif appointment.status == 'cancelled' %}status-cancelled
+        {% else %}status-completed{% endif %}">
+        {{ appointment.get_status_display }}
+      </span>
+    </div>
+
+    <div class="appt-detail-body">
+      <!-- Info grid -->
+      <div class="appt-info-grid">
+        {% if is_patient %}
+        <div class="appt-info-group">
+          <label>Doctor</label>
+          <div class="val">Dr. {{ appointment.slot.doctor.name }}</div>
+          <div class="val-sub">{{ appointment.slot.doctor.specialization }}</div>
+        </div>
+        {% else %}
+        <div class="appt-info-group">
+          <label>Patient</label>
+          <div class="val">{{ appointment.patient.name }}</div>
+        </div>
+        {% endif %}
+
+        <div class="appt-info-group">
+          <label>Date & Time</label>
+          <div class="val">{{ appointment.slot.date }}</div>
+          <div class="val-sub">{{ appointment.slot.start_time|time:"g:i A" }}</div>
+        </div>
+
+        <div class="appt-info-group">
+          <label>Payment</label>
+          <div class="val">₹{{ appointment.slot.doctor.fee|default:"Free" }}</div>
+          <div style="margin-top:4px;">
+            {% if appointment.payment_status == 'pending' %}
+              <span class="appt-status-badge status-pending-payment"
+                style="font-size:0.65rem;padding:3px 10px;">Pending</span>
+            {% elif appointment.payment_status == 'paid' %}
+              <span class="appt-status-badge status-accepted"
+                style="font-size:0.65rem;padding:3px 10px;">Paid</span>
+            {% elif appointment.payment_status == 'refund_pending' %}
+              <span class="appt-status-badge status-pending-approval"
+                style="font-size:0.65rem;padding:3px 10px;">Refund Pending</span>
+            {% elif appointment.payment_status == 'refunded' %}
+              <span class="appt-status-badge status-cancelled"
+                style="font-size:0.65rem;padding:3px 10px;">Refunded</span>
+            {% elif appointment.payment_status == 'no_refund' %}
+              <span class="appt-status-badge status-rejected"
+                style="font-size:0.65rem;padding:3px 10px;">No Refund</span>
+            {% endif %}
+          </div>
+        </div>
+        
+        {% if appointment.status == 'confirmed' %}
+        <div class="appt-info-group">
+          <label>Queue Position</label>
+          <div class="val">#{{ appointment.queue_position }}</div>
+          <div class="val-sub">of 6</div>
+        </div>
+        {% endif %}
+
+        {% if appointment.status == 'rejected' %}
+        <div class="appt-info-group" style="grid-column:1/-1;">
+          <label>Rejection Reason</label>
+          <div class="val" style="color:var(--red);">
+            {{ appointment.rejection_reason|default:"No reason provided." }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Gate pass (only when confirmed & in_person) -->
+      {% if appointment.status == 'confirmed' and appointment.appointment_type == 'in_person' %}
+      <div class="gate-pass-display">
+        <label>Smart Gate Pass</label>
+        <div class="code">{{ appointment.gate_pass_code }}</div>
+        <p>Show this code at the clinic for priority entry</p>
+      </div>
+      {% endif %}
+
+      {% if appointment.status == 'confirmed' and appointment.appointment_type == 'video' and appointment.video_room_url %}
+      <div class="gate-pass-display" style="background:var(--blue-light); border-color:var(--blue);">
+        <label style="color:var(--blue);">Video Consultation Link</label>
+        <a href="{{ appointment.video_room_url }}" target="_blank" class="btn-nb btn-nb-primary" style="margin-top:10px;">
+          Join Video Room
+        </a>
+        <p>Link will be active 5 minutes before your appointment time</p>
+      </div>
+      {% endif %}
+
+      <!-- Actions -->
+      <div class="appt-detail-actions">
+        <a href="{% if is_patient %}{% url 'patient_dashboard' %}{% else %}{% url 'doctor_appointments' %}{% endif %}"
+           class="btn-nb btn-nb-secondary">
+          ← Back
+        </a>
+        {% if is_patient and appointment.status not in 'rejected,completed,cancelled' %}
+        <form method="POST"
+              action="{% url 'cancel_appointment' appointment.pk %}"
+              onsubmit="return confirm('Cancel this appointment? Refund policy: 40% refund if cancelled 1+ hours before. No refund within 1 hour.');"
+              style="margin:0;">
+          {% csrf_token %}
+          <button type="submit" class="btn-nb btn-nb-danger btn-nb-sm">
+            Cancel Appointment
+          </button>
+        </form>
+        {% endif %}
+        {% if is_patient and appointment.status == 'pending_payment' %}
+        <a href="{% url 'book_slot' appointment.slot.doctor.id %}"
+           class="btn-nb btn-nb-primary">
+          Proceed to Pay
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

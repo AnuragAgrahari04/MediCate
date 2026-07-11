@@ -1,0 +1,845 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MediCate — AI Disease Prediction & Expert Consultation{% endblock %}</title>
+  <meta name="description" content="MediCate provides AI-powered disease prediction and connects you with verified specialist doctors near you.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <style>
+    /* ─── MEDICATE GLOBAL DESIGN SYSTEM ─────────────────────── */
+    :root {
+      --blue: #0038FF;
+      --blue-dark: #0025CC;
+      --yellow: #CCFF00;
+      --black: #000000;
+      --white: #FFFFFF;
+      --off-white: #FAFAF7;
+      --grey-light: #F5F5F0;
+      --grey: #666666;
+      --grey-border: #E0E0D8;
+      --red: #FF3B3B;
+      --shadow-hard: 4px 4px 0px #000;
+      --shadow-hard-lg: 6px 6px 0px #000;
+      --shadow-blue: 4px 4px 0px #0038FF;
+      --radius-pill: 999px;
+      --radius-card: 24px;
+      --radius-sm: 12px;
+      --font: 'Inter', sans-serif;
+      --border-w: 2.5px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--off-white);
+      color: var(--black);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ─── NAVBAR ─────────────────────────────────────────────── */
+    .mc-header {
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      background: var(--white);
+      border-bottom: var(--border-w) solid var(--black);
+      height: 68px;
+      display: flex;
+      align-items: center;
+    }
+
+    .mc-navbar {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    /* Logo */
+    .mc-logo {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .mc-logo-medi {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--black);
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+    }
+    .mc-logo-cate {
+      background: var(--yellow);
+      color: var(--black);
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border: 2px solid var(--black);
+      border-radius: var(--radius-pill);
+    }
+
+    /* Nav links (desktop) */
+    .mc-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+    }
+    .mc-nav-links a {
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      color: var(--black);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      transition: background 0.15s;
+      letter-spacing: 0.02em;
+    }
+    .mc-nav-links a:hover { background: var(--grey-light); }
+    .mc-nav-links a.active { background: var(--yellow); }
+
+    /* Navbar right actions */
+    .mc-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Bell icon */
+    .mc-bell-btn {
+      width: 42px; height: 42px;
+      border: var(--border-w) solid var(--black);
+      border-radius: 50%;
+      background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .mc-bell-btn:hover { background: var(--grey-light); transform: scale(1.05); }
+
+    /* Hamburger menu button */
+    .mc-menu-btn {
+      width: 42px; height: 42px;
+      border: var(--border-w) solid var(--black);
+      border-radius: 50%;
+      background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+      flex-shrink: 0;
+    }
+    .mc-menu-btn:hover { background: var(--yellow); transform: scale(1.05); }
+
+    /* Pills / Buttons */
+    .mc-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--yellow); color: var(--black);
+      border: 2px solid var(--black);
+      border-radius: var(--radius-pill);
+      padding: 6px 14px;
+      font-weight: 800; font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+    }
+    .mc-pill:hover { transform: translateY(-1px); box-shadow: var(--shadow-hard); }
+
+    .mc-pill-blue {
+      background: var(--blue); color: var(--white); border-color: var(--black);
+    }
+    .mc-pill-outline {
+      background: transparent; color: var(--black);
+    }
+    .mc-pill-danger {
+      background: var(--red); color: var(--white); border-color: var(--black);
+    }
+
+    /* ─── SLIDE-OUT MENU PANEL ────────────────────────────────── */
+    .mc-menu-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 9998;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .mc-menu-overlay.open { opacity: 1; pointer-events: all; }
+
+    .mc-menu-panel {
+      position: fixed;
+      top: 0; right: 0;
+      width: 360px; max-width: 95vw;
+      height: 100vh;
+      background: var(--white);
+      border-left: var(--border-w) solid var(--black);
+      z-index: 9999;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .mc-menu-panel.open { transform: translateX(0); }
+
+    .mc-menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: var(--border-w) solid var(--black);
+    }
+    .mc-menu-title {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 900; font-size: 1.1rem; text-transform: uppercase;
+    }
+
+    .mc-menu-close {
+      width: 38px; height: 38px;
+      background: var(--yellow);
+      border: 2px solid var(--black);
+      border-radius: 50%;
+      font-size: 1.1rem; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .mc-menu-close:hover { transform: rotate(90deg); }
+
+    /* User profile card in menu */
+    .mc-menu-user {
+      margin: 20px 24px 16px;
+      padding: 16px 20px;
+      border: var(--border-w) solid var(--black);
+      border-radius: var(--radius-card);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none; color: inherit;
+    }
+    .mc-menu-user:hover { background: var(--grey-light); }
+
+    .mc-menu-avatar {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      border: 2px solid var(--black);
+      background: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 900; color: var(--white);
+      flex-shrink: 0; overflow: hidden;
+    }
+    .mc-menu-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .mc-menu-user-info { flex: 1; min-width: 0; }
+    .mc-menu-user-greeting { font-size: 0.7rem; font-weight: 700; color: var(--grey); text-transform: uppercase; letter-spacing: 0.05em; }
+    .mc-menu-user-name { font-size: 1.1rem; font-weight: 900; text-transform: uppercase; }
+
+    .mc-menu-user-actions {
+      display: flex; gap: 10px;
+      padding: 0 24px 20px;
+    }
+    .mc-menu-user-actions a, .mc-menu-user-actions button {
+      flex: 1; padding: 10px 0;
+      border: var(--border-w) solid var(--black);
+      border-radius: var(--radius-pill);
+      font-weight: 800; font-size: 0.8rem; text-transform: uppercase;
+      text-align: center; cursor: pointer;
+      text-decoration: none;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .mc-menu-user-actions a:hover, .mc-menu-user-actions button:hover {
+      transform: translate(-2px,-2px); box-shadow: var(--shadow-hard);
+    }
+    .mc-menu-btn-notif { background: var(--blue); color: var(--white); }
+    .mc-menu-btn-signout { background: var(--white); color: var(--black); }
+
+    /* Nav items in panel */
+    .mc-menu-nav-label {
+      padding: 4px 24px 12px;
+      font-size: 0.7rem; font-weight: 800; color: var(--grey);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      border-top: 1px solid var(--grey-border);
+      margin-top: 4px; padding-top: 16px;
+    }
+
+    .mc-menu-nav-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      margin-bottom: 8px;
+    }
+    .mc-menu-nav-item a {
+      flex: 1;
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      border: var(--border-w) solid var(--black);
+      border-radius: var(--radius-pill);
+      font-weight: 800; font-size: 0.9rem; text-transform: uppercase;
+      text-decoration: none; color: var(--black);
+      background: var(--white);
+      transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+    .mc-menu-nav-item a:hover {
+      background: var(--yellow); transform: translate(-2px,-2px); box-shadow: var(--shadow-hard);
+    }
+    .mc-menu-nav-item .mc-nav-arrow {
+      margin-left: auto;
+      font-size: 1.2rem; color: var(--grey);
+    }
+
+    /* Menu footer */
+    .mc-menu-footer {
+      margin-top: auto;
+      padding: 20px 24px;
+      border-top: var(--border-w) solid var(--black);
+      font-size: 0.75rem; color: var(--grey); font-weight: 600;
+    }
+
+    /* ─── MESSAGES / TOASTS ──────────────────────────────────── */
+    .mc-messages {
+      position: fixed;
+      top: 80px; right: 20px;
+      z-index: 9000;
+      display: flex; flex-direction: column; gap: 10px;
+      max-width: 380px;
+    }
+    .mc-toast {
+      background: var(--white);
+      border: var(--border-w) solid var(--black);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      box-shadow: var(--shadow-hard);
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 700; font-size: 0.875rem;
+      animation: slideInRight 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .mc-toast-success { border-left: 4px solid #22C55E; }
+    .mc-toast-error   { border-left: 4px solid var(--red); }
+    .mc-toast-warning { border-left: 4px solid #F59E0B; }
+    .mc-toast-info    { border-left: 4px solid var(--blue); }
+    .mc-toast-close {
+      margin-left: auto; cursor: pointer; font-size: 1rem;
+      color: var(--grey); background: none; border: none;
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────────── */
+    .mc-footer {
+      background: var(--black);
+      color: var(--white);
+      border-top: var(--border-w) solid var(--black);
+      padding: 64px 24px 32px;
+    }
+    .mc-footer-inner {
+      max-width: 1280px; margin: 0 auto;
+    }
+    .mc-footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+    .mc-footer-brand p {
+      color: #A1A1AA; margin-top: 14px;
+      font-size: 0.9rem; line-height: 1.6; max-width: 300px;
+    }
+    .mc-footer-col h4 {
+      font-size: 0.75rem; font-weight: 900; color: #A1A1AA;
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;
+    }
+    .mc-footer-col ul { list-style: none; }
+    .mc-footer-col ul li { margin-bottom: 10px; }
+    .mc-footer-col ul li a {
+      color: #D4D4D8; text-decoration: none; font-size: 0.9rem; font-weight: 600;
+      transition: color 0.15s;
+    }
+    .mc-footer-col ul li a:hover { color: var(--yellow); }
+    .mc-footer-bottom {
+      border-top: 1px solid #27272A;
+      padding-top: 28px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: #71717A; font-size: 0.8rem; font-weight: 600;
+    }
+
+    /* ─── MODALS ─────────────────────────────────────────────── */
+    .mc-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 10000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .mc-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .mc-modal {
+      background: var(--white);
+      border: var(--border-w) solid var(--black);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-hard-lg);
+      padding: 40px;
+      max-width: 600px; width: 100%;
+      position: relative;
+      transform: translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    .mc-modal-overlay.open .mc-modal { transform: translateY(0); }
+    .mc-modal-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 36px; height: 36px;
+      background: var(--yellow); border: 2px solid var(--black);
+      border-radius: 50%; font-size: 1rem; font-weight: 900;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .mc-modal-title {
+      font-size: 1.5rem; font-weight: 900; text-transform: uppercase;
+      margin-bottom: 28px; text-align: center;
+    }
+    .mc-role-cards {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .mc-role-card {
+      border: var(--border-w) solid var(--black);
+      border-radius: var(--radius-card);
+      padding: 28px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      text-decoration: none; color: var(--black);
+      background: var(--white);
+      box-shadow: var(--shadow-hard);
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+      cursor: pointer;
+    }
+    .mc-role-card:hover {
+      background: var(--yellow);
+      transform: translate(-3px,-3px); box-shadow: 6px 6px 0 var(--black);
+    }
+    .mc-role-card-icon { font-size: 2.5rem; }
+    .mc-role-card-title { font-weight: 900; font-size: 1.1rem; text-transform: uppercase; }
+    .mc-role-card-sub { font-size: 0.8rem; font-weight: 600; color: var(--grey); text-align: center; }
+
+    /* ─── ANIMATIONS ─────────────────────────────────────────── */
+    @keyframes slideInRight {
+      from { transform: translateX(60px); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+    @keyframes fadeUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .mc-nav-links { display: none; }
+      .mc-footer-grid { grid-template-columns: 1fr 1fr; }
+      .mc-role-cards { grid-template-columns: 1fr; }
+    .mc-menu-panel { width: 100vw; }
+    }
+    @media (max-width: 480px) {
+      .mc-footer-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <!-- Core CSS -->
+  <link rel="stylesheet" href="{% static 'css/medicate.css' %}">
+  {% block extra_head %}{% endblock %}
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- ─── SLIDE-OUT MENU OVERLAY ─────────────────────────────── -->
+  <div class="mc-menu-overlay" id="mcMenuOverlay" onclick="closeMcMenu()"></div>
+
+  <!-- ─── SLIDE-OUT MENU PANEL ──────────────────────────────── -->
+  <aside class="mc-menu-panel" id="mcMenuPanel" role="dialog" aria-label="Navigation menu">
+    <div class="mc-menu-header">
+      <div class="mc-menu-title">
+        MENU
+        {% if request.user.is_authenticated %}
+          <span class="mc-pill" style="font-size:0.65rem; padding: 4px 10px;">
+            {% if request.user.doctor_profile %}DOCTOR PRO{% else %}PATIENT{% endif %}
+          </span>
+        {% endif %}
+      </div>
+      <button class="mc-menu-close" onclick="closeMcMenu()" aria-label="Close menu">✕</button>
+    </div>
+
+    {% if request.user.is_authenticated %}
+      <!-- User profile card -->
+      {% if request.user.patient_profile %}
+        <a href="{% url 'patient_profile' request.user.username %}" class="mc-menu-user">
+      {% elif request.user.doctor_profile %}
+        <a href="{% url 'doctor_profile' request.user.username %}" class="mc-menu-user">
+      {% else %}
+        <div class="mc-menu-user">
+      {% endif %}
+        <div class="mc-menu-avatar">
+          {% if request.user.patient_profile and request.user.patient_profile.img %}
+            <img src="{{ request.user.patient_profile.img.url }}" alt="Avatar">
+          {% elif request.user.doctor_profile and request.user.doctor_profile.img %}
+            <img src="{{ request.user.doctor_profile.img.url }}" alt="Avatar">
+          {% else %}
+            {{ request.user.username|first|upper }}
+          {% endif %}
+        </div>
+        <div class="mc-menu-user-info">
+          <div class="mc-menu-user-greeting">
+            {% now "H" as hour %}
+            {% if hour >= "05" and hour < "12" %}Good Morning ☀️{% elif hour >= "12" and hour < "17" %}Good Afternoon 👋{% else %}Good Evening 🌙{% endif %}
+          </div>
+          <div class="mc-menu-user-name">
+            {% if request.user.doctor_profile %}Dr. {% endif %}{{ request.user.username|upper }}
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      {% if request.user.patient_profile or request.user.doctor_profile %}</a>{% else %}</div>{% endif %}
+
+      <!-- Notif + Sign out -->
+      <div class="mc-menu-user-actions">
+        <a href="{% url 'consultation_history' %}" class="mc-menu-btn-notif">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          NOTIFICATIONS
+        </a>
+        <a href="{% url 'logout' %}" class="mc-menu-btn-signout">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          SIGN OUT
+        </a>
+      </div>
+    {% else %}
+      <!-- Guest actions -->
+      <div class="mc-menu-user-actions" style="padding: 20px 24px;">
+        <button onclick="closeMcMenu(); openModal('signupModal');" class="mc-menu-btn-notif" style="border:none; font-family: inherit;">
+          SIGN UP FREE
+        </button>
+        <button onclick="closeMcMenu(); openModal('signinModal');" class="mc-menu-btn-signout" style="border-color: #000; font-family: inherit;">
+          SIGN IN
+        </button>
+      </div>
+    {% endif %}
+
+    <!-- Navigation links -->
+    <div class="mc-menu-nav-label">NAVIGATION</div>
+
+    <div class="mc-menu-nav-item">
+      <a href="{% url 'find_doctors' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        SERVICES
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+
+    {% if request.user.is_authenticated and request.user.patient_profile %}
+    <div class="mc-menu-nav-item">
+      <a href="{% url 'consultation_history' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        MY APPOINTMENTS
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+    {% if not request.user.patient_profile.is_aadhaar_verified %}
+    <div class="mc-menu-nav-item">
+      <a href="{% url 'aadhaar_verify' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        VERIFY IDENTITY (AADHAAR)
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+    {% endif %}
+    <div class="mc-menu-nav-item">
+      <a href="{% url 'patient_dashboard' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        DASHBOARD
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+    {% endif %}
+
+    {% if request.user.is_authenticated and request.user.doctor_profile %}
+    <div class="mc-menu-nav-item">
+      <a href="{% url 'doctor_appointments' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        MY APPOINTMENTS
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+    <div class="mc-menu-nav-item">
+      <a href="{% url 'consultation_history' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        MY CONSULTATIONS
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+    <div class="mc-menu-nav-item">
+      <a href="{% url 'doctor_verification_status' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        VERIFICATION STATUS
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+    <div class="mc-menu-nav-item">
+      <a href="{% url 'doctor_dashboard' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        DASHBOARD
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+    {% endif %}
+
+    <div class="mc-menu-nav-item">
+      <a href="#contact" onclick="closeMcMenu()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        CONTACT US
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+
+    <div class="mc-menu-nav-item">
+      <a href="#trust" onclick="closeMcMenu()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        TRUST CENTER
+        <span class="mc-nav-arrow">›</span>
+      </a>
+    </div>
+
+    <div class="mc-menu-footer">
+      <div>MediCate © 2026 · AI-Powered Healthcare</div>
+      <div style="margin-top:6px;">Verified • Secure • Instant</div>
+    </div>
+  </aside>
+
+  <!-- ─── HEADER / NAVBAR ────────────────────────────────────── -->
+  <header class="mc-header">
+    <nav class="mc-navbar">
+      <!-- Logo -->
+      <a href="{% url 'home' %}" class="mc-logo">
+        <span class="mc-logo-medi">MEDI</span><span class="mc-logo-cate">CATE</span>
+      </a>
+
+      <!-- Center nav (desktop) -->
+      <ul class="mc-nav-links">
+        <li><a href="{% url 'home' %}">Home</a></li>
+        {% if request.user.is_authenticated %}
+          <li><a href="{% url 'find_doctors' %}">Find Doctors</a></li>
+          {% if request.user.patient_profile %}
+            <li><a href="{% url 'check_disease' %}">AI Scan</a></li>
+            <li><a href="{% url 'consultation_history' %}">History</a></li>
+            <li><a href="{% url 'find_doctors' %}">Book Appointment</a></li>
+          {% elif request.user.doctor_profile %}
+            <li><a href="{% url 'doctor_appointments' %}">Appointments</a></li>
+            <li><a href="{% url 'consultation_history' %}">Consultations</a></li>
+          {% endif %}
+        {% else %}
+          <li><a href="#services">Services</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="#contact">Contact</a></li>
+        {% endif %}
+      </ul>
+
+      <!-- Right actions -->
+      <div class="mc-nav-actions">
+        {% if request.user.is_authenticated %}
+          <a href="{% url 'consultation_history' %}" class="mc-bell-btn" title="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </a>
+        {% else %}
+          <button class="mc-pill mc-pill-outline" onclick="openModal('signinModal')" style="display:none;" id="signinBtn">Sign In</button>
+        {% endif %}
+        <button class="mc-menu-btn" id="mcMenuToggle" onclick="openMcMenu()" aria-label="Open menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="16" x2="21" y2="16"/></svg>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ─── TOAST MESSAGES ────────────────────────────────────── -->
+  {% if messages %}
+  <div class="mc-messages" id="mcMessages">
+    {% for message in messages %}
+    <div class="mc-toast mc-toast-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
+      <span>{% if message.tags == 'success' %}✓{% elif message.tags == 'error' %}✗{% elif message.tags == 'warning' %}⚠{% else %}ℹ{% endif %}</span>
+      <span>{{ message }}</span>
+      <button class="mc-toast-close" onclick="this.parentElement.remove()">✕</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ─── MAIN CONTENT ──────────────────────────────────────── -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ─── FOOTER ────────────────────────────────────────────── -->
+  <footer class="mc-footer">
+    <div class="mc-footer-inner">
+      <div class="mc-footer-grid">
+        <div class="mc-footer-brand">
+          <a href="{% url 'home' %}" class="mc-logo" style="margin-bottom: 12px;">
+            <span class="mc-logo-medi" style="color:#fff;">MEDI</span>
+            <span class="mc-logo-cate">CATE</span>
+          </a>
+          <p>AI-powered disease prediction and verified specialist consultations — your health, secured.</p>
+        </div>
+        <div class="mc-footer-col">
+          <h4>Platform</h4>
+          <ul>
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+        <div class="mc-footer-col">
+          <h4>Medical</h4>
+          <ul>
+            <li><a href="{% url 'find_doctors' %}">Find Doctors</a></li>
+            <li><a href="{% url 'check_disease' %}">AI Symptom Scan</a></li>
+            <li><a href="#trust">Trust Center</a></li>
+          </ul>
+        </div>
+        <div class="mc-footer-col">
+          <h4>Legal & Support</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#contact">Help & Support</a></li>
+            <li><a href="#">support@medicate.in</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="mc-footer-bottom">
+        <span>© 2026 MediCate. All rights reserved.</span>
+        <div style="display:flex;gap:20px;">
+          <a href="#" style="color:inherit;text-decoration:none;">Privacy</a>
+          <a href="#" style="color:inherit;text-decoration:none;">Terms</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ─── SIGNUP MODAL ──────────────────────────────────────── -->
+  <div class="mc-modal-overlay" id="signupModal" onclick="if(event.target===this)closeModal('signupModal')">
+    <div class="mc-modal">
+      <button class="mc-modal-close" onclick="closeModal('signupModal')">✕</button>
+      <h3 class="mc-modal-title">Sign Up As</h3>
+      <div class="mc-role-cards">
+        <a href="{% url 'signup_doctor' %}" class="mc-role-card">
+          <div class="mc-role-card-icon">🩺</div>
+          <div class="mc-role-card-title">Doctor</div>
+          <div class="mc-role-card-sub">Register as a verified medical professional</div>
+        </a>
+        <a href="{% url 'signup_patient' %}" class="mc-role-card">
+          <div class="mc-role-card-icon">👤</div>
+          <div class="mc-role-card-title">Patient</div>
+          <div class="mc-role-card-sub">Get AI predictions & consultations</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SIGNIN MODAL ──────────────────────────────────────── -->
+  <div class="mc-modal-overlay" id="signinModal" onclick="if(event.target===this)closeModal('signinModal')">
+    <div class="mc-modal">
+      <button class="mc-modal-close" onclick="closeModal('signinModal')">✕</button>
+      <h3 class="mc-modal-title">Sign In As</h3>
+      <div class="mc-role-cards" style="grid-template-columns: 1fr 1fr 1fr;">
+        <a href="{% url 'login_admin' %}" class="mc-role-card">
+          <div class="mc-role-card-icon">🛡️</div>
+          <div class="mc-role-card-title">Admin</div>
+          <div class="mc-role-card-sub">Platform management</div>
+        </a>
+        <a href="{% url 'login_doctor' %}" class="mc-role-card">
+          <div class="mc-role-card-icon">🩺</div>
+          <div class="mc-role-card-title">Doctor</div>
+          <div class="mc-role-card-sub">Access your consultations</div>
+        </a>
+        <a href="{% url 'login_patient' %}" class="mc-role-card">
+          <div class="mc-role-card-icon">👤</div>
+          <div class="mc-role-card-title">Patient</div>
+          <div class="mc-role-card-sub">Your health dashboard</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    /* ─── MENU ──────────────────────────────────────────────── */
+    function openMcMenu() {
+      document.getElementById('mcMenuPanel').classList.add('open');
+      document.getElementById('mcMenuOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMcMenu() {
+      document.getElementById('mcMenuPanel').classList.remove('open');
+      document.getElementById('mcMenuOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    /* ─── MODALS ─────────────────────────────────────────────── */
+    function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeMcMenu();
+        document.querySelectorAll('.mc-modal-overlay.open').forEach(m => m.classList.remove('open'));
+        document.body.style.overflow = '';
+      }
+    });
+
+    /* ─── AUTO-DISMISS TOASTS ────────────────────────────────── */
+    setTimeout(() => {
+      const msgs = document.getElementById('mcMessages');
+      if (msgs) msgs.style.display = 'none';
+    }, 6000);
+
+    /* ─── SCROLL FADE-IN OBSERVER ────────────────────────────── */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.scroll-fade').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(32px)';
+        el.style.transition = 'opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)';
+        observer.observe(el);
+      });
+    });
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

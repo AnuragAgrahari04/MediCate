@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Admin Login — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.auth-page{min-height:calc(100vh - 120px);display:flex;align-items:center;justify-content:center;padding:2rem 1rem;}
+.auth-card{width:100%;max-width:440px;overflow:hidden;padding:0;}
+.auth-header{background:var(--brand-teal-l);border-bottom:2.5px solid var(--text-primary);padding:2.5rem 2rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.75rem;}
+.auth-header h2{color:var(--text-primary);font-family:var(--font-display);font-weight:800;font-size:1.75rem;margin:0;}
+.auth-header p{color:var(--text-secondary);font-size:0.875rem;margin:0;font-weight:700;}
+.auth-body{padding:2rem;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card card-nb">
+    <div class="auth-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--text-primary);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+      <h2>Admin Login</h2>
+      <p>Platform administration access</p>
+    </div>
+    <div class="auth-body">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom:1.25rem;">
+          <label class="form-label-nb">Username</label>
+          <input type="text" name="username" class="input-nb" placeholder="Admin username" required style="width:100%;">
+        </div>
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label class="form-label-nb">Password</label>
+          <input type="password" name="password" class="input-nb" placeholder="Admin password" required style="width:100%;">
+        </div>
+        <div style="text-align:right; margin-bottom:0.75rem;">
+          <a href="{% url 'forgot_password' %}" style="font-size:0.8rem;color:var(--brand-teal);font-weight:700;text-decoration:none;">Forgot Password?</a>
+        </div>
+        <button type="submit" class="btn-nb btn-nb-primary" style="width:100%;padding:0.875rem;font-size:1rem;">
+          Admin Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

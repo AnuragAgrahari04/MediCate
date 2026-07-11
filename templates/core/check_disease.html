@@ -1,0 +1,644 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Check Disease — MediCate{% endblock %}
+
+{% block extra_css %}
+<style>
+  .check-page-nb {
+    padding: 60px 24px;
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .page-title-nb {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  
+  .page-title-nb h1 {
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: 2.25rem;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  
+  .page-title-nb p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 580px;
+    margin: 0 auto;
+    font-weight: 600;
+  }
+  
+  .symptom-picker-nb {
+    background: var(--card-bg);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  
+  .picker-header-nb {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .picker-header-nb h3 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: 1.25rem;
+    text-transform: uppercase;
+  }
+  
+  .search-bar-nb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-bg-alt);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    transition: border-color 0.2s;
+  }
+  
+  .search-bar-nb:focus-within {
+    border-color: var(--primary);
+  }
+  
+  .search-bar-nb input {
+    background: none;
+    border: none;
+    outline: none;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    width: 220px;
+    font-weight: 600;
+  }
+  
+  .search-bar-nb input::placeholder {
+    color: var(--text-muted);
+  }
+  
+  .symptom-grid-nb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 4px;
+    border: 2px solid var(--border-muted);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    background: var(--card-bg-alt);
+  }
+  
+  .symptom-grid-nb::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .symptom-grid-nb::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  
+  .sym-btn-nb {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  
+  .sym-btn-nb:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+  }
+  
+  .sym-btn-nb.selected {
+    border-color: var(--border);
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 2px 2px 0px var(--shadow-color);
+  }
+  
+  .sym-btn-nb.hidden {
+    display: none;
+  }
+  
+  .selected-section-nb {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-muted);
+  }
+  
+  .selected-label-nb {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .selected-list-nb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 36px;
+  }
+  
+  .sel-tag-nb {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--primary);
+    color: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 0px #000000;
+  }
+
+  [data-theme="dark"] .sel-tag-nb {
+    box-shadow: 2px 2px 0px var(--accent);
+  }
+  
+  .sel-tag-remove-nb {
+    cursor: pointer;
+    opacity: 0.8;
+    font-size: 0.85rem;
+    line-height: 1;
+    font-weight: 900;
+  }
+  
+  .sel-tag-remove-nb:hover {
+    opacity: 1;
+    color: var(--accent);
+  }
+  
+  .predict-bar-nb {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-muted);
+    flex-wrap: wrap;
+  }
+  
+  .count-pill-nb {
+    background: rgba(0, 56, 255, 0.08);
+    color: var(--primary);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  [data-theme="dark"] .count-pill-nb {
+    background: rgba(204, 255, 0, 0.08);
+    color: var(--accent);
+    border-color: var(--border);
+  }
+  
+  /* Result card */
+  .result-card-nb {
+    background: var(--card-bg);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    animation: resultReveal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  @keyframes resultReveal {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  
+  .result-hero-nb {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #ffffff;
+    border-bottom: var(--border-width) solid var(--border);
+  }
+  
+  .result-icon-nb {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+  
+  .result-disease-nb {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  
+  .result-sub-nb {
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0.85;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+  
+  .result-body-nb {
+    padding: 32px;
+  }
+  
+  .conf-row-nb {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  
+  .conf-label-nb {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+  
+  .conf-pct-nb {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--primary);
+  }
+
+  [data-theme="dark"] .conf-pct-nb {
+    color: var(--accent);
+  }
+  
+  .top-predictions-nb {
+    margin-top: 24px;
+    border-top: 2px dashed var(--border-muted);
+    padding-top: 20px;
+  }
+  
+  .pred-row-nb {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-muted);
+  }
+  
+  .pred-row-nb:last-child {
+    border-bottom: none;
+  }
+  
+  .pred-rank-nb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--card-bg-alt);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  
+  .pred-rank-nb.top {
+    background: var(--accent);
+    color: #000000;
+  }
+  
+  .pred-name-nb {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+  }
+  
+  .pred-pct-bar-nb {
+    width: 120px;
+    height: 8px;
+    background: var(--card-bg-alt);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+  
+  .pred-pct-fill-nb {
+    height: 100%;
+    background: var(--primary);
+    border-radius: var(--radius-pill);
+  }
+
+  [data-theme="dark"] .pred-pct-fill-nb {
+    background: var(--accent);
+  }
+  
+  .pred-pct-val-nb {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--primary);
+    min-width: 45px;
+    text-align: right;
+  }
+
+  [data-theme="dark"] .pred-pct-val-nb {
+    color: var(--accent);
+  }
+  
+  .result-footer-nb {
+    padding: 24px 32px;
+    border-top: var(--border-width) solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: var(--card-bg-alt);
+  }
+  
+  .disclaimer-nb {
+    background: rgba(245, 158, 11, 0.08);
+    border: 2.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #92400E;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    box-shadow: 3px 3px 0px #F59E0B;
+  }
+
+  [data-theme="dark"] .disclaimer-nb {
+    color: #FCD34D;
+    background: rgba(245, 158, 11, 0.06);
+    box-shadow: 3px 3px 0px var(--accent);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="check-page-nb">
+  <div class="page-title-nb">
+    <h1>
+      <svg style="width: 32px; height: 32px; color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      Symptom Checker
+    </h1>
+    <p>Select your symptoms below and our AI model will identify possible conditions with confidence scores.</p>
+  </div>
+
+  <!-- Result (shown after POST) -->
+  {% if result %}
+  <div class="result-card-nb" id="resultCard">
+    <div class="result-hero-nb">
+      <div class="result-icon-nb">
+        <svg style="width: 28px; height: 28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </svg>
+      </div>
+      <div>
+        <div class="result-disease-nb">{{ result.disease }}</div>
+        <div class="result-sub-nb">Patient: {{ request.user.patient_profile.name }} &nbsp;•&nbsp; Age: {{ request.user.patient_profile.age }}</div>
+      </div>
+      <span class="badge-nb badge-nb-accent" style="margin-left:auto; border-width:2px; font-weight:800; font-size:0.75rem;">{{ result.specialist }}</span>
+    </div>
+
+    <div class="result-body-nb">
+      <div class="conf-row-nb">
+        <span class="conf-label-nb">Confidence Score</span>
+        <span class="conf-pct-nb">{{ result.confidence }}%</span>
+      </div>
+      
+      <!-- Styled Neo-brutalist Progress Bar -->
+      <div style="background-color: var(--card-bg-alt); border: 2.5px solid #000; border-radius: var(--radius-pill); height: 16px; overflow: hidden; position: relative;">
+        <div id="confBar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></div>
+      </div>
+
+      {% if result.disease_info %}
+      <p style="margin-top: 1.25rem; font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; line-height: 1.6;">{{ result.disease_info }}</p>
+      {% endif %}
+
+      <!-- Top 5 predictions -->
+      {% if result.predictions|length > 1 %}
+      <div class="top-predictions-nb">
+        <div style="font-family: var(--font-heading); font-size: 0.75rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">Top Predictions</div>
+        {% for disease, conf in result.predictions %}
+        <div class="pred-row-nb">
+          <div class="pred-rank-nb {% if forloop.first %}top{% endif %}">{{ forloop.counter }}</div>
+          <div class="pred-name-nb">{{ disease }}</div>
+          <div class="pred-pct-bar-nb"><div class="pred-pct-fill-nb" style="width:{{ conf }}%"></div></div>
+          <div class="pred-pct-val-nb">{{ conf }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="result-footer-nb">
+      <a href="{% url 'find_doctors' %}?specialist={{ result.specialist }}&disease={{ result.disease }}" class="btn-nb btn-nb-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" style="margin-right: 4px;">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        Consult a {{ result.specialist }}
+      </a>
+      <a href="https://www.google.com/search?q={{ result.disease }}+disease" target="_blank" class="btn-nb btn-nb-secondary">
+        Learn about {{ result.disease }}
+      </a>
+    </div>
+  </div>
+
+  <div class="disclaimer-nb">
+    <svg style="width: 20px; height: 20px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+    <span>This tool does not provide medical advice. It is intended for informational purposes only and is not a substitute for professional medical diagnosis or treatment. Always consult a qualified doctor.</span>
+  </div>
+  {% endif %}
+
+  <!-- Symptom Picker Form -->
+  <div class="symptom-picker-nb">
+    <div class="picker-header-nb">
+      <h3>Select Your Symptoms</h3>
+      <div class="search-bar-nb">
+        <svg style="width: 16px; height: 16px; color: var(--text-secondary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="symSearch" placeholder="Search symptoms…" autocomplete="off">
+      </div>
+    </div>
+
+    <form method="POST" id="symptomForm">
+      {% csrf_token %}
+      <div class="symptom-grid-nb" id="symptomGrid">
+        {% for sym in symptoms %}
+        <button type="button" class="sym-btn-nb {% if sym in selected %}selected{% endif %}"
+          data-sym="{{ sym }}" onclick="toggleSymptom(this)">
+          {% if sym in selected %}✓ {% endif %}{{ sym|cut:'_' | title }}
+          <input type="checkbox" name="symptoms" value="{{ sym }}"
+            {% if sym in selected %}checked{% endif %} style="display:none;">
+        </button>
+        {% endfor %}
+      </div>
+
+      <div class="selected-section-nb">
+        <div class="selected-label-nb">Selected (<span id="selCount">{{ selected|length }}</span>)</div>
+        <div class="selected-list-nb" id="selectedList">
+          {% for sym in selected %}
+          <span class="sel-tag-nb" data-sym="{{ sym }}">
+            {{ sym|cut:'_'|title }}
+            <span class="sel-tag-remove-nb" onclick="removeSymptom('{{ sym }}')">✕</span>
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="predict-bar-nb">
+        <span class="count-pill-nb" id="countPill">
+          <span id="selCount2">{{ selected|length }}</span> symptom(s) selected
+        </span>
+        <div style="display:flex; gap:12px; align-items:center;">
+          {% if selected %}
+          <button type="button" class="btn-nb btn-nb-secondary btn-nb-sm" onclick="clearAll()">✕ Clear</button>
+          {% endif %}
+          <button type="submit" class="btn-nb btn-nb-primary" id="predictBtn"
+            {% if selected|length < 2 %}disabled{% endif %} style="padding:12px 24px; font-size:0.95rem;">
+            Predict Disease
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const selected = new Set({{ selected|safe }});
+
+function updateUI() {
+  const count = selected.size;
+  document.getElementById('selCount').textContent  = count;
+  document.getElementById('selCount2').textContent = count;
+  document.getElementById('predictBtn').disabled   = count < 2;
+  
+  // Rebuild selected list tags
+  const list = document.getElementById('selectedList');
+  list.innerHTML = '';
+  selected.forEach(sym => {
+    list.innerHTML += `<span class="sel-tag-nb" data-sym="${sym}">
+      ${sym.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}
+      <span class="sel-tag-remove-nb" onclick="removeSymptom('${sym}')">✕</span>
+    </span>`;
+  });
+  
+  // Sync grid buttons
+  document.querySelectorAll('.sym-btn-nb').forEach(btn => {
+    const s = btn.dataset.sym;
+    if (selected.has(s)) {
+      btn.classList.add('selected');
+      btn.innerHTML = `✓ ${s.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}<input type="checkbox" name="symptoms" value="${s}" checked style="display:none;">`;
+    } else {
+      btn.classList.remove('selected');
+      btn.innerHTML = `${s.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}<input type="checkbox" name="symptoms" value="${s}" style="display:none;">`;
+    }
+  });
+}
+
+function toggleSymptom(btn) {
+  const sym = btn.dataset.sym;
+  if (selected.has(sym)) { selected.delete(sym); } else { selected.add(sym); }
+  updateUI();
+}
+
+function removeSymptom(sym) {
+  selected.delete(sym); updateUI();
+}
+
+function clearAll() {
+  selected.clear(); updateUI();
+}
+
+// Search filter
+document.getElementById('symSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase().replace(/\s+/g,'_');
+  document.querySelectorAll('.sym-btn-nb').forEach(btn => {
+    btn.classList.toggle('hidden', !btn.dataset.sym.includes(q));
+  });
+});
+
+// Animate confidence bar on result
+const confBar = document.getElementById('confBar');
+if (confBar) {
+  setTimeout(() => confBar.style.width = '{{ result.confidence|default:0 }}%', 100);
+}
+
+// Scroll to result
+{% if result %}
+document.getElementById('resultCard')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+{% endif %}
+
+// Submit button loader
+document.getElementById('symptomForm').addEventListener('submit', function(e) {
+  if (selected.size < 2) { e.preventDefault(); return; }
+  const btn = document.getElementById('predictBtn');
+  btn.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:#fff;width:16px;height:16px;margin-right:8px;"></span> Analysing…';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

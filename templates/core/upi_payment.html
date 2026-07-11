@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% block title %}Pay via UPI — MediCate{% endblock %}
+{% block extra_css %}
+<style>
+.upi-page {
+  max-width: 580px;
+  margin: 2.5rem auto;
+  padding: 0 1rem 4rem;
+}
+
+/* Back link */
+.upi-back {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  color: var(--grey); font-size: 0.85rem; font-weight: 700;
+  text-decoration: none; margin-bottom: 1.25rem;
+  transition: color 0.2s;
+}
+.upi-back:hover { color: var(--black); }
+
+/* Card shell */
+.upi-card {
+  background: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: var(--radius-card);
+  box-shadow: 4px 4px 0 var(--black);
+  overflow: hidden;
+}
+
+/* Doctor header */
+.upi-doc-header {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2.5px solid var(--black);
+  background: var(--grey-light);
+}
+.upi-doc-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  border: 2.5px solid var(--black);
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0; overflow: hidden;
+}
+.upi-doc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.upi-doc-name {
+  font-size: 1rem; font-weight: 900; color: var(--black);
+  text-transform: uppercase; letter-spacing: -0.01em;
+}
+.upi-doc-sub { font-size: 0.78rem; font-weight: 700; color: var(--grey); margin-top: 2px; }
+.upi-appt-badge {
+  margin-left: auto; text-align: right; flex-shrink: 0;
+  background: var(--white); border: 2px solid var(--black);
+  border-radius: 8px; padding: 6px 12px;
+}
+.upi-appt-badge-label { font-size: 0.6rem; font-weight: 800; color: var(--grey); text-transform: uppercase; letter-spacing: 0.06em; }
+.upi-appt-badge-val { font-size: 0.9rem; font-weight: 900; color: var(--black); font-family: monospace; }
+
+/* Amount row */
+.upi-amount-row {
+  display: flex; align-items: stretch; gap: 0;
+  border-bottom: 2.5px solid var(--black);
+}
+.upi-amount-left {
+  flex: 1; padding: 1.25rem 1.5rem;
+  border-right: 2px solid var(--black);
+}
+.upi-amount-right {
+  flex: 1; padding: 1.25rem 1.5rem;
+}
+.upi-field-label {
+  font-size: 0.65rem; font-weight: 900; color: var(--grey);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;
+}
+.upi-fee-val {
+  font-size: 2rem; font-weight: 900; color: var(--black);
+}
+.upi-slot-val {
+  font-size: 0.9rem; font-weight: 800; color: var(--black); margin-bottom: 2px;
+}
+.upi-upi-val {
+  font-size: 0.85rem; font-weight: 800; color: var(--blue);
+  word-break: break-all;
+}
+
+/* Timer bar */
+.upi-timer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.625rem 1.5rem;
+  border-bottom: 2px solid var(--grey-border);
+  background: var(--grey-light);
+  font-size: 0.78rem; font-weight: 700; color: var(--grey);
+}
+#upiCountdown {
+  font-weight: 900; font-size: 0.9rem; color: var(--black);
+  font-family: monospace;
+}
+#upiCountdown.urgent { color: var(--red); }
+
+/* QR section */
+.upi-qr-section {
+  padding: 1.5rem;
+  border-bottom: 2.5px solid var(--black);
+  text-align: center;
+}
+.upi-qr-label {
+  font-size: 0.65rem; font-weight: 900; color: var(--grey);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;
+}
+.upi-qr-frame {
+  display: inline-block;
+  background: var(--white); border: 2.5px solid var(--black);
+  box-shadow: 3px 3px 0 var(--black);
+  border-radius: 12px; padding: 12px;
+  margin-bottom: 0.75rem;
+}
+.upi-qr-frame img { display: block; width: 180px; height: 180px; }
+.upi-qr-no-image {
+  width: 180px; height: 180px;
+  background: var(--grey-light); border: 2px dashed var(--grey-border);
+  border-radius: 8px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 0.8rem; color: var(--grey); gap: 0.5rem;
+  text-align: center; padding: 1rem;
+}
+.upi-apps-note {
+  font-size: 0.72rem; color: var(--grey); font-weight: 600;
+}
+.upi-id-chip {
+  display: inline-block; margin-top: 0.5rem;
+  background: var(--grey-light); border: 2px solid var(--black);
+  border-radius: var(--radius-pill); padding: 5px 14px;
+  font-size: 0.82rem; font-weight: 800; color: var(--black);
+  font-family: monospace; letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+/* Steps */
+.upi-steps { padding: 1.25rem 1.5rem; border-bottom: 2.5px solid var(--black); }
+.upi-step {
+  display: flex; align-items: flex-start; gap: 0.875rem;
+  padding: 0.625rem 0; border-bottom: 1px solid var(--grey-border);
+}
+.upi-step:last-child { border-bottom: none; padding-bottom: 0; }
+.upi-step-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--yellow); border: 2px solid var(--black);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 900; color: var(--black);
+  flex-shrink: 0;
+}
+.upi-step-text {
+  font-size: 0.82rem; font-weight: 600; color: var(--black);
+  line-height: 1.5; padding-top: 3px;
+}
+.upi-step-text strong { font-weight: 900; }
+
+/* Warning */
+.upi-warning {
+  margin: 1.25rem 1.5rem;
+  background: #FFFBEB; border: 2px solid #F59E0B;
+  border-radius: 10px; padding: 0.875rem 1rem;
+  font-size: 0.78rem; color: #92400E; line-height: 1.6;
+  display: flex; gap: 0.5rem; align-items: flex-start;
+  box-shadow: 2px 2px 0 #F59E0B;
+}
+
+/* Action buttons */
+.upi-actions { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.upi-btn-confirm {
+  display: block; width: 100%; padding: 0.9rem;
+  background: var(--yellow); color: var(--black);
+  border: 2.5px solid var(--black); border-radius: var(--radius-pill);
+  box-shadow: 3px 3px 0 var(--black);
+  font-size: 0.9rem; font-weight: 900; text-transform: uppercase;
+  letter-spacing: 0.04em; cursor: pointer; text-align: center;
+  font-family: var(--font);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.upi-btn-confirm:hover {
+  transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--black);
+}
+.upi-btn-confirm:active {
+  transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--black);
+}
+.upi-btn-cancel {
+  display: block; width: 100%; padding: 0.75rem;
+  background: transparent; color: var(--grey);
+  border: 2px solid var(--grey-border); border-radius: var(--radius-pill);
+  font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  text-align: center; text-decoration: none;
+  font-family: var(--font);
+  transition: border-color 0.2s, color 0.2s;
+}
+.upi-btn-cancel:hover { border-color: var(--red); color: var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="upi-page">
+  <a href="{% url 'patient_dashboard' %}" class="upi-back">← Back to Dashboard</a>
+
+  <div class="upi-card">
+
+    <!-- Doctor header -->
+    <div class="upi-doc-header">
+      <div class="upi-doc-avatar">
+        {% if doctor.img %}
+          <img src="{{ doctor.img.url }}" alt="{% if doctor.name|slice:":3" == "Dr." %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %}">
+        {% else %}
+          <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:1.5rem;background:#f0f0f0;border-radius:50%;">
+            {% if doctor.gender == 'female' %}👩⚕️{% else %}👨⚕️{% endif %}
+          </div>
+        {% endif %}
+      </div>
+      <div>
+        <div class="upi-doc-name">{% if doctor.name|slice:":3" == "Dr." %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %}</div>
+        <div class="upi-doc-sub">{{ doctor.specialization }}</div>
+      </div>
+      <div class="upi-appt-badge">
+        <div class="upi-appt-badge-label">Appointment</div>
+        <div class="upi-appt-badge-val">#{{ appointment.id|stringformat:"06d" }}</div>
+      </div>
+    </div>
+
+    <!-- Amount + slot info -->
+    <div class="upi-amount-row">
+      <div class="upi-amount-left">
+        <div class="upi-field-label">Total Amount</div>
+        <div class="upi-fee-val">₹{{ fee }}</div>
+        <div style="font-size:0.75rem;color:var(--grey);font-weight:700;margin-top:4px;">
+          {{ appointment.slot.date }} · {{ appointment.slot.start_time|time:"g:i A" }}
+        </div>
+      </div>
+      <div class="upi-amount-right">
+        <div class="upi-field-label">Pay to UPI ID</div>
+        <div class="upi-upi-val">{{ doctor.upi_id }}</div>
+        <div style="font-size:0.75rem;color:var(--grey);font-weight:700;margin-top:4px;">
+          {% if doctor.name|slice:":3" == "Dr." %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="upi-timer">
+      <span>⏱ Slot reserved for</span>
+      <span id="upiCountdown">15:00</span>
+    </div>
+
+    <!-- QR Code -->
+    <div class="upi-qr-section">
+      <div class="upi-qr-label">Scan with any UPI app</div>
+      <div class="upi-qr-frame">
+        {% if qr_b64 %}
+          <img src="data:image/png;base64,{{ qr_b64 }}" alt="UPI QR Code">
+        {% else %}
+          <div class="upi-qr-no-image">
+            <span style="font-size:2rem;">📱</span>
+            QR unavailable.<br>Use UPI ID below.
+          </div>
+        {% endif %}
+      </div>
+      <div class="upi-apps-note">
+        Works with GPay, PhonePe, Paytm, BHIM, and all UPI apps
+      </div>
+      <div class="upi-id-chip">{{ doctor.upi_id }}</div>
+    </div>
+
+    <!-- Steps -->
+    <div class="upi-steps">
+      <div class="upi-step">
+        <div class="upi-step-num">1</div>
+        <div class="upi-step-text">
+          Open any UPI app — <strong>GPay, PhonePe, Paytm, BHIM</strong>
+        </div>
+      </div>
+      <div class="upi-step">
+        <div class="upi-step-num">2</div>
+        <div class="upi-step-text">
+          Scan the QR above or send to UPI ID <strong>{{ doctor.upi_id }}</strong>
+        </div>
+      </div>
+      <div class="upi-step">
+        <div class="upi-step-num">3</div>
+        <div class="upi-step-text">
+          Enter amount <strong>₹{{ fee }}</strong> with note
+          <strong>MediCate Appt #{{ appointment.id }}</strong>
+        </div>
+      </div>
+      <div class="upi-step">
+        <div class="upi-step-num">4</div>
+        <div class="upi-step-text">
+          Come back here and tap <strong>"I've Paid"</strong> below
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning -->
+    <div class="upi-warning">
+      <span>⚠️</span>
+      <span>
+        This is a <strong>direct P2P payment</strong> to the doctor's UPI.
+        MediCate does not hold or auto-verify this payment.
+        The doctor will manually confirm receipt and approve your appointment.
+      </span>
+    </div>
+
+    <!-- Buttons -->
+    <div class="upi-actions">
+      <form method="POST"
+            action="{% url 'mark_upi_paid' appointment.id %}"
+            onsubmit="return confirm(
+              'Confirm you have paid ₹{{ fee }} to {{ doctor.upi_id }}. The doctor will verify and approve your appointment.');">
+        {% csrf_token %}
+        <button type="submit" class="upi-btn-confirm">
+          ✅ I've Paid ₹{{ fee }} — Notify Doctor
+        </button>
+      </form>
+      <a href="{% url 'cancel_appointment' appointment.id %}"
+         class="upi-btn-cancel"
+         onclick="return confirm('Cancel this appointment?');">
+        Cancel Appointment
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Countdown timer (15 minutes)
+let seconds = 15 * 60;
+const el = document.getElementById('upiCountdown');
+const timer = setInterval(() => {
+  seconds--;
+  if (seconds <= 0) {
+    clearInterval(timer);
+    el.textContent = '00:00';
+    el.style.color = '#ef4444';
+    return;
+  }
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  if (seconds < 60) el.style.color = '#ef4444';
+}, 1000);
+</script>
+{% endblock %}

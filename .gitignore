@@ -1,0 +1,78 @@
+# Environment
+.env
+*.env
+.env.*
+
+# Database
+db.sqlite3
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+env/
+.venv/
+
+# Media uploads
+media/
+
+# Static collected
+staticfiles/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Secret keys
+secrets.json
+
+
+# Temporary dev files — do not push
+fix_bug3.py
+recover.py
+recovered_appt.html
+scratch_test.py
+scratch_test2.py
+output1.txt
+output2.txt
+output3.txt
+output*.txt
+ImplementationPlan-1
+ImplementationPlan-2
+base.html.step_152
+setup.sh
+
+
+# Scratch / temp work
+scratch/
+fix_bug3.py
+recover.py
+recovered_appt.html
+scratch_test.py
+scratch_test2.py
+output1.txt
+output2.txt
+output3.txt
+output*.txt
+ImplementationPlan-1
+ImplementationPlan-2
+base.html.step_152
+setup.sh
+runtime.txt
+
+# Large media files
+static/mendio_demo.mp4
+*.mp4
+*.mov
+*.avi
+*.pkl

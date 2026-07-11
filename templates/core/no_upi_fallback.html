@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Payment Pending — MediCate{% endblock %}
+{% block extra_css %}
+<style>
+  .wrap { max-width: 520px; margin: 4rem auto; padding: 2rem; }
+  .card {
+    background: var(--white); border: 2.5px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    border-radius: var(--radius-card); padding: 2.5rem 2rem; text-align: center;
+    animation: cardIn 0.4s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes cardIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 72px; height: 72px; font-size: 2rem;
+    background: var(--white); border: 2.5px solid var(--black);
+    box-shadow: 3px 3px 0 var(--black); border-radius: 50%; margin-bottom: 1.5rem;
+  }
+  .card h1 { font-family: var(--font); font-size: 1.6rem; font-weight: 900; color: var(--black); text-transform: uppercase; margin-bottom: 0.5rem; }
+  .card h1 span { color: var(--blue); }
+  .desc { font-size: 0.88rem; color: var(--grey); line-height: 1.7; margin-bottom: 2rem; font-weight: 600; }
+  
+  .info-box {
+    background: var(--grey-light); border: 2px solid var(--black); border-radius: 8px;
+    padding: 1.25rem; margin-bottom: 1.5rem; text-align: left;
+  }
+  .info-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; }
+  .info-row:last-child { margin-bottom: 0; }
+  .info-label { color: var(--grey); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem; }
+  .info-val { color: var(--black); font-weight: 800; }
+  .appt-id { font-family: monospace; color: var(--blue); }
+  
+  .notice {
+    background: #FFFBEB; border: 2px solid #F59E0B; border-radius: 8px;
+    padding: 1rem; margin-bottom: 1.5rem; font-size: 0.82rem;
+    color: #92400E; line-height: 1.6; text-align: left;
+    display: flex; gap: 0.5rem; align-items: flex-start;
+    box-shadow: 2px 2px 0 #F59E0B;
+  }
+  .btn-row { display: flex; gap: 0.75rem; }
+  .btn-primary {
+    flex: 1; padding: 0.875rem;
+    background: var(--yellow); color: var(--black); font-weight: 900;
+    border: 2.5px solid var(--black); border-radius: var(--radius-pill);
+    box-shadow: 3px 3px 0 var(--black); cursor: pointer;
+    text-decoration: none; display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.02em;
+    transition: transform 0.1s, box-shadow 0.1s;
+    font-family: var(--font);
+  }
+  .btn-primary:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--black); }
+  .btn-secondary {
+    flex: 1; padding: 0.875rem;
+    background: transparent; color: var(--grey);
+    border: 2px solid var(--grey-border); border-radius: var(--radius-pill);
+    text-decoration: none; display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s;
+    font-family: var(--font);
+  }
+  .btn-secondary:hover { border-color: var(--red); color: var(--red); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="card">
+    <div class="icon">⚠️</div>
+    <h1>Payment <span>Setup Pending</span></h1>
+    <p class="desc">
+      Your slot has been reserved! However, {% if doctor.name|slice:":3" == "Dr." %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %} hasn't set up
+      their UPI payment details yet. Please contact the doctor directly to complete payment
+      and confirm your appointment.
+    </p>
+
+    <div class="info-box">
+      <div class="info-row">
+        <span class="info-label">Appointment ID</span>
+        <span class="info-val appt-id">#{{ appointment.id|stringformat:"06d" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Doctor</span>
+        <span class="info-val">{% if doctor.name|slice:":3" == "Dr." %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Specialization</span>
+        <span class="info-val">{{ doctor.specialization }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Date & Time</span>
+        <span class="info-val">{{ appointment.slot.date }} · {{ appointment.slot.start_time|time:"g:i A" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Fee</span>
+        <span class="info-val" style="color:var(--black); font-size: 1.1rem;">₹{{ doctor.fee }}</span>
+      </div>
+      {% if doctor.mobile_no %}
+      <div class="info-row">
+        <span class="info-label">Doctor's Contact</span>
+        <span class="info-val">{{ doctor.mobile_no }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="notice">
+      <span>⚠️</span>
+      <span>
+        Your slot is <strong>temporarily reserved</strong> for 2 hours.
+        Once you pay the doctor directly and they confirm receipt,
+        they will approve your appointment from their dashboard.
+      </span>
+    </div>
+
+    <div class="btn-row">
+      <a href="{% url 'appointment_detail' appointment.pk %}" class="btn-primary">
+        View Appointment →
+      </a>
+      <a href="{% url 'cancel_appointment' appointment.pk %}"
+         class="btn-secondary"
+         onclick="return confirm('Cancel this appointment?');">
+        Cancel
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

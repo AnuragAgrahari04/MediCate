@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}Verification Status — MediCate{% endblock %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { background: #0a0a0a; font-family: 'Space Grotesk', sans-serif; color: #f0f0f0; }
+  .status-container { max-width: 600px; margin: 4rem auto; padding: 2rem; }
+  .status-card { 
+    background: #111; 
+    border: 3px solid #1f2937; 
+    border-radius: 12px; 
+    padding: 2.5rem 2rem; 
+    text-align: center;
+    position: relative;
+  }
+  .status-icon { font-size: 3rem; margin-bottom: 1rem; display: inline-block; }
+  h2 { font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 1.5rem; }
+  
+  .timeline {
+    display: flex; justify-content: space-between; position: relative; margin: 3rem 0;
+  }
+  .timeline::before {
+    content: ''; position: absolute; top: 15px; left: 10%; right: 10%; height: 2px; background: #374151; z-index: 0;
+  }
+  .step { position: relative; z-index: 1; text-align: center; width: 33.33%; }
+  .step-dot {
+    width: 32px; height: 32px; border-radius: 50%; background: #1f2937; border: 2px solid #374151;
+    margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center;
+  }
+  .step-label { font-size: 0.85rem; font-weight: 600; color: #9ca3af; }
+  
+  /* Active/Completed states */
+  .step.completed .step-dot { background: #00ff88; border-color: #00ff88; color: #000; }
+  .step.completed .step-label { color: #fff; }
+  .step.active .step-dot { background: #111; border-color: #00ff88; box-shadow: 0 0 0 4px rgba(0,255,136,0.2); }
+  .step.active .step-label { color: #00ff88; }
+  .step.rejected .step-dot { background: #ef4444; border-color: #ef4444; color: #000; }
+  .step.rejected .step-label { color: #fca5a5; }
+  
+  .status-box {
+    padding: 1.5rem; border-radius: 8px; margin-top: 2rem; text-align: left;
+  }
+  .box-pending { background: #fef08a; color: #713f12; border: 1px solid #eab308; }
+  .box-approved { background: #bbf7d0; color: #14532d; border: 1px solid #22c55e; }
+  .box-rejected { background: #fecaca; color: #7f1d1d; border: 1px solid #ef4444; }
+  
+  .btn-dashboard { 
+    display: inline-block; background: #374151; color: #fff; text-decoration: none;
+    padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; margin-top: 2rem;
+  }
+  .btn-dashboard:hover { background: #4b5563; }
+</style>
+
+<div class="status-container">
+  <div class="status-card">
+    <div class="status-icon">
+      {% if profile.verification_status == 'pending' %}📝
+      {% elif profile.verification_status == 'under_review' %}⏳
+      {% elif profile.verification_status == 'approved' %}✅
+      {% elif profile.verification_status == 'rejected' %}❌
+      {% endif %}
+    </div>
+    <h2>Verification Status</h2>
+    
+    <div class="timeline">
+      <div class="step completed">
+        <div class="step-dot">✓</div>
+        <div class="step-label">Submitted</div>
+      </div>
+      
+      {% if profile.verification_status == 'approved' %}
+        <div class="step completed">
+          <div class="step-dot">✓</div>
+          <div class="step-label">Under Review</div>
+        </div>
+        <div class="step completed">
+          <div class="step-dot">✓</div>
+          <div class="step-label">Approved</div>
+        </div>
+      {% elif profile.verification_status == 'rejected' %}
+        <div class="step completed">
+          <div class="step-dot">✓</div>
+          <div class="step-label">Under Review</div>
+        </div>
+        <div class="step rejected">
+          <div class="step-dot">!</div>
+          <div class="step-label">Rejected</div>
+        </div>
+      {% else %}
+        <!-- pending or under_review -->
+        <div class="step active">
+          <div class="step-dot"></div>
+          <div class="step-label">Under Review</div>
+        </div>
+        <div class="step">
+          <div class="step-dot"></div>
+          <div class="step-label">Approved</div>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if profile.verification_status == 'pending' or profile.verification_status == 'under_review' %}
+      <div class="status-box box-pending">
+        <h4 style="margin:0 0 0.5rem;font-weight:700;">Under Review</h4>
+        <p style="margin:0;font-size:0.9rem;">Our team is currently verifying your medical credentials. This process typically takes 24-48 hours. We will notify you via email once completed.</p>
+      </div>
+    {% elif profile.verification_status == 'approved' %}
+      <div class="status-box box-approved">
+        <h4 style="margin:0 0 0.5rem;font-weight:700;">Verified Doctor</h4>
+        <p style="margin:0;font-size:0.9rem;">Your credentials have been successfully verified! Your profile is now live and patients can find you and book appointments.</p>
+      </div>
+    {% elif profile.verification_status == 'rejected' %}
+      <div class="status-box box-rejected">
+        <h4 style="margin:0 0 0.5rem;font-weight:700;">Application Rejected</h4>
+        <p style="margin:0;font-size:0.9rem;">We were unable to verify your credentials.</p>
+        {% if profile.admin_notes %}
+          <div style="margin-top:0.75rem;padding:0.75rem;background:rgba(255,255,255,0.2);border-radius:6px;font-size:0.85rem;">
+            <strong>Reason:</strong> {{ profile.admin_notes }}
+          </div>
+        {% endif %}
+        <p style="margin-top:0.75rem;font-size:0.85rem;">Please update your profile details or contact support for assistance.</p>
+      </div>
+    {% endif %}
+
+    <a href="{% url 'doctor_dashboard' %}" class="btn-dashboard">Go to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

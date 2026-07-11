@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Verify Your Identity — MediCate{% endblock %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { background: #0a0a0a; font-family: 'Space Grotesk', sans-serif; color: #f0f0f0; }
+  .auth-container { max-width: 480px; margin: 4rem auto; padding: 2rem; }
+  .auth-card { 
+    background: #111; 
+    border: 3px solid #000; 
+    box-shadow: 6px 6px 0 #000; 
+    border-radius: 12px; 
+    padding: 2.5rem 2rem; 
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: #00ff88;
+  }
+  .auth-icon { 
+    font-size: 3rem; 
+    margin-bottom: 1rem;
+    display: inline-block;
+    background: #1f2937;
+    width: 80px; height: 80px;
+    line-height: 80px;
+    border-radius: 50%;
+    border: 2px dashed #00ff88;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(0, 255, 136, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+  }
+  h2 { font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+  p.subtitle { color: #9ca3af; font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5; }
+  .demo-badge {
+    background: #374151; color: #d1d5db;
+    padding: 0.25rem 0.75rem; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    display: inline-block; margin-bottom: 1.5rem;
+  }
+  .step-box {
+    background: #1f2937;
+    border: 2px solid #374151;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: left;
+    transition: all 0.3s;
+  }
+  .step-box:hover, .step-box:focus-within {
+    border-color: #00ff88;
+  }
+  .step-title {
+    font-weight: 700; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .step-num {
+    background: #00ff88; color: #000; width: 24px; height: 24px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;
+  }
+  input[type="file"] {
+    width: 100%;
+    color: #9ca3af;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  input[type="file"]::file-selector-button {
+    background: #374151;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    margin-right: 1rem;
+    font-weight: 600;
+  }
+  input[type="file"]::file-selector-button:hover { background: #4b5563; }
+  
+  .btn-submit { 
+    background: #00ff88; color: #000; 
+    border: none; padding: 1rem; 
+    width: 100%; border-radius: 8px; 
+    font-size: 1.1rem; font-weight: 800; 
+    cursor: pointer; margin-top: 1rem;
+    transition: transform 0.1s, background 0.2s;
+  }
+  .btn-submit:hover { background: #a8ff3e; transform: translateY(-2px); }
+  .btn-submit:active { transform: translateY(0); }
+  
+  .messages { margin-bottom: 1rem; }
+  .msg-alert { padding: 1rem; border-radius: 8px; font-weight: 600; margin-bottom: 0.5rem; border: 1px solid; }
+  .msg-error { background: #2d0d0d; border-color: #ef4444; color: #fca5a5; }
+</style>
+
+<div class="auth-container">
+  {% if messages %}
+    <div class="messages">
+      {% for msg in messages %}
+        <div class="msg-alert {% if 'error' in msg.tags %}msg-error{% else %}msg-success{% endif %}">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="auth-card">
+    <div class="auth-icon">🆔</div>
+    <div class="demo-badge">Demo Mode</div>
+    <h2>Verify Your Identity</h2>
+    <p class="subtitle">To ensure trust across the MediCate platform, we require a one-time Aadhaar verification.</p>
+    
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div class="step-box">
+        <div class="step-title"><span class="step-num">1</span> Upload Aadhaar Card</div>
+        <p style="font-size: 0.85rem; color: #9ca3af;">Clear photo of the front of your Aadhaar card.</p>
+        <input type="file" name="aadhaar_image" accept="image/*" required>
+      </div>
+
+      <div class="step-box">
+        <div class="step-title"><span class="step-num">2</span> Upload Selfie</div>
+        <p style="font-size: 0.85rem; color: #9ca3af;">A clear, well-lit photo of your face.</p>
+        <input type="file" name="selfie_image" accept="image/*" required>
+      </div>
+
+      <div class="step-box" style="opacity: 0.7; background: transparent; border: 2px dashed #374151;">
+        <div class="step-title" style="color: #6b7280;"><span class="step-num" style="background:#374151;color:#9ca3af;">3</span> Instant Verification</div>
+        <p style="font-size: 0.85rem; color: #6b7280;">Our AI matches your face to the ID.</p>
+      </div>
+
+      <button type="submit" class="btn-submit">Verify Now</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

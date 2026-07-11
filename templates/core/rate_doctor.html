@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Rate Dr. {{ consultation.doctor.name }} — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.rate-page{min-height:calc(100vh - 120px);display:flex;align-items:center;justify-content:center;padding:2rem 1rem;}
+.rate-card{width:100%;max-width:520px;overflow:hidden;padding:0;}
+.rate-header{background:var(--brand-teal-l);border-bottom:2.5px solid var(--text-primary);padding:2rem 2rem 1.5rem;color:var(--text-primary);text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.75rem;}
+.rate-body{padding:2rem;}
+.stars-input{display:flex;justify-content:center;gap:0.5rem;margin-bottom:1.5rem;}
+.star-btn{font-size:2.5rem;cursor:pointer;transition:transform var(--trans-fast);background:none;border:none;line-height:1;}
+.star-btn:hover,.star-btn.lit{transform:scale(1.15);}
+.star-btn.lit{filter:drop-shadow(2px 2px 0 var(--text-primary));}
+</style>
+{% endblock %}
+{% block content %}
+<div class="rate-page">
+  <div class="rate-card card-nb">
+    <div class="rate-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--text-primary);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <h2 style="color:var(--text-primary);margin:0;font-family:var(--font-display);font-weight:800;font-size:1.5rem;">Rate Dr. {{ consultation.doctor.name }}</h2>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin:0;font-weight:700;">{{ consultation.predicted_disease }} consultation</p>
+    </div>
+    <div class="rate-body">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="stars-input" id="starsInput">
+          {% for i in "12345" %}
+          <button type="button" class="star-btn" data-val="{{ forloop.counter }}" onclick="setRating({{ forloop.counter }})">☆</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="score" id="scoreInput" value="5">
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label class="form-label-nb">Your Review (optional)</label>
+          <textarea name="review" class="input-nb" rows="4" placeholder="Share your experience…" style="width:100%;resize:none;"></textarea>
+        </div>
+        <button type="submit" class="btn-nb btn-nb-primary" style="width:100%;padding:0.875rem;" id="rateBtn">
+          Submit Rating
+        </button>
+      </form>
+      <div style="text-align:center;margin-top:1.25rem;">
+        <a href="{% url 'consultation_view' consultation.pk %}" style="font-size:0.875rem;color:var(--text-secondary);font-weight:700;text-decoration:underline;">Skip for now</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let currentRating = 5;
+setRating(5);
+function setRating(val) {
+  currentRating = val;
+  document.getElementById('scoreInput').value = val;
+  document.querySelectorAll('.star-btn').forEach((btn, i) => {
+    btn.textContent = i < val ? '★' : '☆';
+    btn.classList.toggle('lit', i < val);
+    btn.style.color = i < val ? '#F59E0B' : 'var(--text-secondary)';
+  });
+}
+</script>
+{% endblock %}

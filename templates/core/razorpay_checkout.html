@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}Complete Payment — MediCate{% endblock %}
+
+{% block extra_css %}
+<style>
+.rzp-page {
+  max-width: 480px;
+  margin: 2.5rem auto;
+  padding: 0 1rem 4rem;
+}
+.rzp-card {
+  background: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: var(--radius-card);
+  box-shadow: 4px 4px 0 var(--black);
+  overflow: hidden;
+}
+.rzp-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2.5px solid var(--black);
+  background: var(--grey-light);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.rzp-doc-name {
+  font-size: 1rem; font-weight: 900;
+  color: var(--black); text-transform: uppercase;
+}
+.rzp-doc-sub {
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--grey); margin-top: 2px;
+}
+.rzp-body { padding: 1.5rem; }
+.rzp-amount-box {
+  background: var(--grey-light);
+  border: 2px solid var(--black);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.rzp-amount-label {
+  font-size: 0.65rem; font-weight: 900;
+  color: var(--grey); text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 4px;
+}
+.rzp-amount-val {
+  font-size: 2rem; font-weight: 900; color: var(--black);
+}
+.rzp-slot-info {
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--grey); margin-top: 4px;
+}
+.rzp-secure-note {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.75rem; font-weight: 700;
+  color: var(--grey); margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--grey-light);
+  border: 1.5px solid var(--grey-border);
+  border-radius: 8px;
+}
+.rzp-btn-pay {
+  display: block; width: 100%; padding: 0.9rem;
+  background: var(--yellow); color: var(--black);
+  border: 2.5px solid var(--black);
+  border-radius: var(--radius-pill);
+  box-shadow: 3px 3px 0 var(--black);
+  font-size: 0.95rem; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  cursor: pointer; text-align: center;
+  font-family: var(--font);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.rzp-btn-pay:hover {
+  transform: translate(-2px,-2px);
+  box-shadow: 5px 5px 0 var(--black);
+}
+.rzp-btn-cancel {
+  display: block; width: 100%; margin-top: 0.75rem;
+  padding: 0.75rem; background: transparent;
+  color: var(--grey);
+  border: 2px solid var(--grey-border);
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; text-align: center;
+  text-decoration: none; font-family: var(--font);
+  transition: border-color 0.2s, color 0.2s;
+}
+.rzp-btn-cancel:hover {
+  border-color: var(--red); color: var(--red);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rzp-page">
+  <div class="rzp-card">
+
+    <div class="rzp-header">
+      <div style="font-size:2rem;">
+        {% if doctor.gender == 'female' %}👩⚕️{% else %}👨⚕️{% endif %}
+      </div>
+      <div>
+        <div class="rzp-doc-name">Dr. {{ doctor.name }}</div>
+        <div class="rzp-doc-sub">{{ doctor.specialization }}</div>
+      </div>
+    </div>
+
+    <div class="rzp-body">
+      <div class="rzp-amount-box">
+        <div>
+          <div class="rzp-amount-label">Consultation Fee</div>
+          <div class="rzp-amount-val">₹{{ fee }}</div>
+          <div class="rzp-slot-info">
+            📅 {{ appointment.slot.date }}
+            · 🕐 {{ appointment.slot.start_time|time:"g:i A" }}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="rzp-amount-label">Appointment</div>
+          <div style="font-family:monospace;font-weight:900;
+            font-size:0.9rem;color:var(--black);">
+            #{{ appointment.id|stringformat:"06d" }}
+          </div>
+        </div>
+      </div>
+
+      <div class="rzp-secure-note">
+        🔒 Secured by Razorpay · 100% refund on cancellation
+      </div>
+
+      <button id="rzp-pay-btn" class="rzp-btn-pay">
+        💳 Pay ₹{{ fee }} Securely
+      </button>
+
+      <a href="{% url 'cancel_appointment' appointment.id %}"
+         class="rzp-btn-cancel"
+         onclick="return confirm('Cancel this appointment?');">
+        Cancel Appointment
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+const options = {
+  key:         '{{ rzp_key }}',
+  amount:      {{ order.amount }},
+  currency:    'INR',
+  name:        'MediCate',
+  description: 'Appointment #{{ appointment.id|stringformat:"06d" }}',
+  order_id:    '{{ order.id }}',
+  prefill: {
+    name:  '{{ appointment.patient.name }}',
+    email: '{{ appointment.patient.user.email }}',
+  },
+  theme: { color: '#CCFF00' },
+  handler: function(response) {
+    // POST payment details to verification endpoint
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "razorpay_verify" %}';
+    const fields = {
+      'csrfmiddlewaretoken': '{{ csrf_token }}',
+      'razorpay_order_id':   response.razorpay_order_id,
+      'razorpay_payment_id': response.razorpay_payment_id,
+      'razorpay_signature':  response.razorpay_signature,
+      'appointment_id':      '{{ appointment.id }}',
+    };
+    for (const [k, v] of Object.entries(fields)) {
+      const i = document.createElement('input');
+      i.type = 'hidden'; i.name = k; i.value = v;
+      form.appendChild(i);
+    }
+    document.body.appendChild(form);
+    form.submit();
+  },
+  modal: {
+    ondismiss: function() {
+      console.log('Payment modal closed');
+    }
+  }
+};
+document.getElementById('rzp-pay-btn')
+  .addEventListener('click', function() {
+    const rzp = new Razorpay(options);
+    rzp.open();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: medicate
+    env: python
+    plan: free
+    pythonVersion: 3.12.1
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python -m ml.predictor"
+    startCommand: "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p $PORT medicate.asgi:application"
+    autoDeploy: true
+    envVars:
+      - key: DEBUG
+        value: "False"

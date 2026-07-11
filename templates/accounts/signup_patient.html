@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Patient Registration — Medicate{% endblock %}
+{% block extra_css %}
+<style>
+.signup-page{padding:3rem 1rem;}
+.signup-wrap{max-width:720px;margin:0 auto;}
+.signup-card{overflow:hidden; padding:0;}
+.signup-header{background:var(--brand-teal-l);border-bottom:2.5px solid var(--text-primary);padding:2.25rem 2rem; text-align:center; display:flex; flex-direction:column; align-items:center; gap:0.75rem;}
+.signup-header h2{color:var(--text-primary);font-family:var(--font-display);font-weight:800;font-size:1.75rem;margin:0;}
+.signup-header p{color:var(--text-secondary);font-size:0.875rem;margin:0;font-weight:700;}
+.signup-body{padding:2rem;}
+.form-section-title{font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-secondary);margin:2rem 0 1rem;display:flex;align-items:center;gap:0.5rem;}
+.form-section-title::after{content:'';flex:1;height:2px;background:var(--text-primary);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.error-list{background:var(--accent-red-l);border:2.5px solid var(--text-primary);border-radius:var(--radius-md);padding:0.875rem 1rem;margin-bottom:1.5rem;font-size:0.875rem;color:var(--text-primary);font-weight:800;box-shadow:3px 3px 0 var(--text-primary);list-style-type:none;}
+.error-list li{margin-bottom:0.25rem;}
+@media(max-width:600px){.form-row{grid-template-columns:1fr;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="signup-page">
+  <div class="signup-wrap">
+    <div class="signup-card card-nb">
+      <div class="signup-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--text-primary);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <h2>Create Patient Account</h2>
+        <p>Enter your details to get started with disease prediction and doctor consultations</p>
+      </div>
+      <div class="signup-body">
+        {% if form.errors %}
+        <ul class="error-list">
+          {% for field in form %}{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}{% endfor %}
+          {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="POST" id="signupForm">
+          {% csrf_token %}
+
+          <div class="form-section-title">Account Credentials</div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Username *</label>
+              <input type="text" name="username" class="input-nb" placeholder="e.g. john_doe" required value="{{ form.username.value|default:'' }}" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Full Name *</label>
+              <input type="text" name="name" class="input-nb" placeholder="Your full name" required value="{{ form.name.value|default:'' }}" style="width:100%;">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label-nb">Email Address *</label>
+            <input type="email" name="email" class="input-nb" placeholder="you@example.com" required value="{{ form.email.value|default:'' }}" style="width:100%;">
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Password *</label>
+              <input type="password" name="password" class="input-nb" placeholder="Min. 8 characters" required id="pw1" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Confirm Password *</label>
+              <input type="password" name="password2" class="input-nb" placeholder="Repeat password" required id="pw2" style="width:100%;">
+            </div>
+          </div>
+
+          <div class="form-section-title">Personal Details</div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Date of Birth</label>
+              <input type="date" name="dob" class="input-nb" value="{{ form.dob.value|default:'' }}" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Gender</label>
+              <select name="gender" class="input-nb" style="width:100%;">
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Mobile Number</label>
+              <input type="tel" name="mobile_no" class="input-nb" placeholder="+91 9876543210" value="{{ form.mobile_no.value|default:'' }}" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Blood Group</label>
+              <input type="text" name="blood_group" class="input-nb" placeholder="e.g. A+" maxlength="5" value="{{ form.blood_group.value|default:'' }}" style="width:100%;">
+            </div>
+          </div>
+
+          <div class="form-section-title">📍 Address (for nearby doctor recommendations)</div>
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label-nb">Street Address</label>
+            <input type="text" name="address" class="input-nb" placeholder="House no, Street name" value="{{ form.address.value|default:'' }}" style="width:100%;">
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">City *</label>
+              <input type="text" name="city" class="input-nb" placeholder="Your city" value="{{ form.city.value|default:'' }}" required style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">State</label>
+              <input type="text" name="state" class="input-nb" placeholder="Your state" value="{{ form.state.value|default:'' }}" style="width:100%;">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label-nb">Pincode</label>
+              <input type="text" name="pincode" class="input-nb" placeholder="6-digit pincode" maxlength="10" value="{{ form.pincode.value|default:'' }}" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label class="form-label-nb">Country</label>
+              <input type="text" name="country" class="input-nb" placeholder="Country" value="{{ form.country.value|default:'India' }}" style="width:100%;">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-nb btn-nb-primary" style="width:100%;padding:0.9375rem;font-size:1rem;" id="submitBtn">
+            Create Account
+          </button>
+        </form>
+
+        <div style="text-align:center;margin-top:1.5rem;font-size:0.875rem;color:var(--text-secondary);font-weight:700;">
+          Already have an account? <a href="{% url 'login_patient' %}" style="color:var(--brand-teal);font-weight:800;text-decoration:underline;">Sign in</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('signupForm').addEventListener('submit', function(e) {
+  const btn = document.getElementById('submitBtn');
+  if (document.getElementById('pw1').value !== document.getElementById('pw2').value) {
+    e.preventDefault();
+    alert('Passwords do not match!');
+    return;
+  }
+  btn.innerHTML = '<span class="spinner"></span> Creating account…';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

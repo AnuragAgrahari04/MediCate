@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Feedback — Medicate{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - 120px);display:flex;align-items:center;justify-content:center;padding:2rem 1rem;">
+  <div class="card-nb" style="width:100%;max-width:520px;overflow:hidden;padding:0;">
+    <div style="background:var(--brand-teal-l);padding:2rem;text-align:center;border-bottom:2.5px solid var(--text-primary);display:flex;flex-direction:column;align-items:center;gap:0.75rem;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--text-primary);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <h2 style="color:var(--text-primary);margin:0;font-family:var(--font-display);font-weight:800;font-size:1.75rem;">Give Feedback</h2>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin:0;font-weight:700;">Help us improve Medicate</p>
+    </div>
+    <div style="padding:2rem;">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom:1.25rem;">
+          <label class="form-label-nb">Your feedback</label>
+          <textarea name="message" class="input-nb" rows="5" placeholder="What can we improve? What do you love?" required style="width:100%;resize:none;"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label class="form-label-nb">Overall rating</label>
+          <select name="rating" class="input-nb" style="width:100%;">
+            <option value="5">Excellent</option>
+            <option value="4">Good</option>
+            <option value="3">Average</option>
+            <option value="2">Below average</option>
+            <option value="1">Poor</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-nb btn-nb-primary" style="width:100%;padding:0.875rem;font-size:1rem;">
+          Submit Feedback
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

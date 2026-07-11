@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}{{ profile.name }} — Patient Profile{% endblock %}
+{% block extra_css %}
+<style>
+.profile-page{padding:2.5rem 1.5rem;max-width:900px;margin:0 auto;}
+.profile-header{background:var(--brand-teal-l);border-radius:var(--radius-lg);padding:2rem;margin-bottom:2rem;display:flex;align-items:center;gap:1.5rem;color:var(--text-primary);border:2.5px solid var(--text-primary);box-shadow:var(--shadow-md);}
+.ph-avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;background:var(--bg-card);border:2.5px solid var(--text-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ph-name{font-family:var(--font-display);font-size:1.75rem;font-weight:800;}
+.ph-sub{font-size:0.875rem;opacity:0.9;margin-top:0.375rem;font-weight:700;display:flex;align-items:center;gap:0.375rem;}
+.ph-sub span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.profile-card{background:var(--bg-card);margin-bottom:1.5rem;}
+.pc-title{font-weight:800;font-family:var(--font-display);margin-bottom:1.25rem;font-size:1.125rem;display:flex;align-items:center;gap:0.5rem;color:var(--text-primary);}
+.info-field{margin-bottom:1rem;}
+.if-label{font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);margin-bottom:0.25rem;}
+.if-value{font-size:0.9375rem;color:var(--text-primary);font-weight:700;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.hidden{display:none!important;}
+
+.profile-page form select,
+.profile-page form input,
+.profile-page form textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg-input);
+  border: 2.5px solid var(--text-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  outline: none;
+  transition: all var(--trans-fast);
+}
+.profile-page form select:focus,
+.profile-page form input:focus,
+.profile-page form textarea:focus {
+  background: var(--bg-card);
+  box-shadow: 2px 2px 0 var(--text-primary);
+}
+
+@media(max-width:640px){.profile-grid{grid-template-columns:1fr;}.form-row-2{grid-template-columns:1fr;}.profile-header{flex-direction:column;text-align:center;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+  <div class="profile-header">
+    {% if profile.img %}
+      <img src="{{ profile.img.url }}" alt="{{ profile.name }}" class="ph-avatar" style="display:flex;">
+    {% else %}
+      <div class="ph-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--text-primary);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+    {% endif %}
+    <div>
+      <div class="ph-name">{{ profile.name }}</div>
+      <div class="ph-sub">Patient #{{ profile.id }} &nbsp;|&nbsp; {{ profile.email }}</div>
+      {% if profile.city %}
+        <div class="ph-sub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:middle; color:var(--text-primary);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          {{ profile.full_address }}
+        </div>
+      {% endif %}
+    </div>
+    {% if is_owner %}
+    <div style="margin-left:auto;">
+      <button onclick="document.getElementById('editSection').classList.toggle('hidden')" class="btn-nb btn-nb-secondary btn-nb-sm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="margin-right:6px; vertical-align:middle;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        Edit Profile
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- View Mode -->
+  <div class="profile-grid" id="viewSection">
+    <div class="profile-card card-nb">
+      <div class="pc-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Personal Info
+      </div>
+      <div class="info-field"><div class="if-label">Full Name</div><div class="if-value">{{ profile.name }}</div></div>
+      <div class="info-field"><div class="if-label">Email</div><div class="if-value">{{ profile.email }}</div></div>
+      <div class="info-field"><div class="if-label">Date of Birth</div><div class="if-value">{{ profile.dob|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Age</div><div class="if-value">{{ profile.age|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Gender</div><div class="if-value">{{ profile.gender|capfirst|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Blood Group</div><div class="if-value">{{ profile.blood_group|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Mobile</div><div class="if-value">{{ profile.mobile_no|default:'—' }}</div></div>
+    </div>
+    <div class="profile-card card-nb">
+      <div class="pc-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        Location
+      </div>
+      <div class="info-field"><div class="if-label">Address</div><div class="if-value">{{ profile.address|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">City</div><div class="if-value">{{ profile.city|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">State</div><div class="if-value">{{ profile.state|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Pincode</div><div class="if-value">{{ profile.pincode|default:'—' }}</div></div>
+      <div class="info-field"><div class="if-label">Country</div><div class="if-value">{{ profile.country|default:'—' }}</div></div>
+      {% if profile.latitude %}
+      <div class="info-field">
+        <div class="if-label">Coordinates</div>
+        <div class="if-value" style="font-size:0.8rem;color:var(--text-secondary);">{{ profile.latitude|floatformat:4 }}, {{ profile.longitude|floatformat:4 }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Edit Mode -->
+  {% if is_owner %}
+  <div id="editSection" class="hidden" style="margin-top:1.5rem;">
+    <div class="profile-card card-nb">
+      <div class="pc-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        Edit Profile
+      </div>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-row-2">
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Full Name</label>{{ form.name }}</div>
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Email</label>{{ form.email }}</div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Date of Birth</label>{{ form.dob }}</div>
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Gender</label>{{ form.gender }}</div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Mobile</label>{{ form.mobile_no }}</div>
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Blood Group</label>{{ form.blood_group }}</div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Street Address</label>{{ form.address }}</div>
+        <div class="form-row-2">
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">City</label>{{ form.city }}</div>
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">State</label>{{ form.state }}</div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Pincode</label>{{ form.pincode }}</div>
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Country</label>{{ form.country }}</div>
+        </div>
+        <div class="form-group" style="margin-bottom:1.5rem;"><label class="form-label-nb">Profile Photo</label>{{ form.img }}</div>
+        <button type="submit" class="btn-nb btn-nb-primary" style="padding:0.75rem 2rem;">Save Changes</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

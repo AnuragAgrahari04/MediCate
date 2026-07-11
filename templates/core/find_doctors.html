@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Find Doctors — Medicate{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+.find-page { display: flex; height: calc(100vh - 80px); overflow: hidden; background: var(--bg-body); }
+.map-container { flex: 0 0 45%; height: 100%; border-right: 3px solid var(--text-primary); position: relative; }
+.list-container { flex: 1; height: 100%; overflow-y: auto; padding: 2rem; background: var(--bg-card); }
+#map { width: 100%; height: 100%; background: #e0e0e0; z-index: 1; }
+
+.filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.filter-chip { padding: 0.5rem 1rem; border: 2.5px solid var(--text-primary); border-radius: 2rem; background: var(--bg-card); font-weight: 800; color: var(--text-primary); cursor: pointer; text-decoration: none; box-shadow: 2px 2px 0 var(--text-primary); transition: all 0.2s; }
+.filter-chip:hover, .filter-chip.active { background: var(--brand-teal); transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--text-primary); }
+
+.doctor-card { border: 3px solid var(--text-primary); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem; background: var(--bg-card); box-shadow: 4px 4px 0 var(--text-primary); display: flex; gap: 1.5rem; }
+.doc-img { width: 80px; height: 80px; border-radius: 50%; border: 2.5px solid var(--text-primary); object-fit: cover; background: #fff; }
+.doc-info { flex: 1; }
+.doc-name { font-size: 1.25rem; font-weight: 800; font-family: var(--font-display); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.verified-badge { background: var(--brand-yellow); color: var(--text-primary); font-size: 0.75rem; padding: 0.25rem 0.5rem; border: 2px solid var(--text-primary); border-radius: 1rem; font-weight: 800; }
+.doc-spec { color: var(--text-secondary); font-weight: 700; margin-bottom: 0.5rem; }
+.doc-meta { display: flex; gap: 1rem; font-size: 0.875rem; font-weight: 700; margin-bottom: 1rem; flex-wrap: wrap; }
+.doc-actions { display: flex; gap: 0.5rem; }
+
+.osm-badge { background: #b0e0e6; color: var(--text-primary); font-size: 0.75rem; padding: 0.25rem 0.5rem; border: 2px solid var(--text-primary); border-radius: 1rem; font-weight: 800; }
+
+@media (max-width: 900px) {
+  .find-page { flex-direction: column; overflow: auto; height: auto; }
+  .map-container { flex: none; height: 300px; border-right: none; border-bottom: 3px solid var(--text-primary); }
+  .list-container { flex: none; height: auto; overflow: visible; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="find-page">
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+  <div class="list-container">
+    <h1 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 1rem; font-weight: 800;">
+      {% if specialist %}{{ specialist|title }}s{% else %}Find Doctors{% endif %}
+      {% if city %} near {{ city }}{% endif %}
+    </h1>
+
+    <div class="filter-bar">
+      <a href="?location={{ location_query }}" class="filter-chip {% if not specialist %}active{% endif %}">All</a>
+      <a href="?specialist=Cardiologist&location={{ location_query }}" class="filter-chip {% if specialist == 'Cardiologist' %}active{% endif %}">Cardiologist</a>
+      <a href="?specialist=Dermatologist&location={{ location_query }}" class="filter-chip {% if specialist == 'Dermatologist' %}active{% endif %}">Dermatologist</a>
+      <a href="?specialist=Pediatrician&location={{ location_query }}" class="filter-chip {% if specialist == 'Pediatrician' %}active{% endif %}">Pediatrician</a>
+      <a href="?specialist=Orthopedic&location={{ location_query }}" class="filter-chip {% if specialist == 'Orthopedic' %}active{% endif %}">Orthopedic</a>
+      <a href="?specialist=General Physician&location={{ location_query }}" class="filter-chip {% if specialist == 'General Physician' %}active{% endif %}">General Physician</a>
+    </div>
+
+    <!-- Platform Doctors -->
+    {% if platform_doctors %}
+      <h3 style="font-weight: 800; margin-bottom: 1rem; font-size: 1.25rem;">Platform Verified Doctors</h3>
+      {% for doc in platform_doctors %}
+        <div class="doctor-card">
+          {% if doc.img %}
+            <img src="{{ doc.img.url }}" class="doc-img"
+                 alt="{% if doc.name|slice:":3" == "Dr." %}{{ doc.name }}{% else %}Dr. {{ doc.name }}{% endif %}">
+          {% else %}
+            <div class="doc-img" style="display:flex;align-items:center;
+              justify-content:center;background:#f0f0f0;
+              border-radius:50%;color:var(--text-primary);">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4z"></path>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <path d="M10 11H14"></path>
+                <path d="M12 9V13"></path>
+              </svg>
+            </div>
+          {% endif %}
+          <div class="doc-info">
+            <div class="doc-name">{% if doc.name|slice:":3" == "Dr." %}{{ doc.name }}{% else %}Dr. {{ doc.name }}{% endif %} <span class="verified-badge">✓ Verified</span></div>
+            <div class="doc-spec">{{ doc.specialization }} • {{ doc.experience_yrs }} Yrs Exp</div>
+            <div class="doc-meta" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px;">
+              <span style="display:flex;align-items:center;gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                {% if doc.distance_km and doc.distance_km < 9000 %}
+                  {{ doc.distance_km|floatformat:1 }} km away
+                {% elif doc.city %}
+                  {{ doc.city }}
+                {% else %}
+                  Location not set
+                {% endif %}
+              </span>
+              <span style="display:flex;align-items:center;gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                {{ doc.rating }}
+              </span>
+              <span style="display:flex;align-items:center;gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
+                ₹{{ doc.fee }}
+              </span>
+              {% if doc.video_consult_enabled %}
+              <span style="display:flex;align-items:center;gap:4px;color:var(--blue);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                Video Consult (₹{{ doc.video_consult_fee }})
+              </span>
+              {% endif %}
+            </div>
+            <div class="doc-actions">
+              {% if doc.video_consult_enabled %}
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;width:100%;">
+                <a href="{% url 'book_slot' doc.id %}" class="btn-nb btn-nb-outline" style="flex:1;text-align:center;">Book In-Person (₹{{ doc.fee }})</a>
+                <a href="{% url 'book_video_slot' doc.id %}" class="btn-nb btn-nb-primary" style="flex:1;text-align:center;">Video Consult (₹{{ doc.video_consult_fee }})</a>
+              </div>
+              {% else %}
+              <a href="{% url 'book_slot' doc.id %}" class="btn-nb btn-nb-primary">Book In-Person (₹{{ doc.fee }})</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- OSM Doctors -->
+    {% if osm_doctors %}
+      <h3 style="font-weight: 800; margin-bottom: 1rem; font-size: 1.25rem; margin-top: 2rem;">Nearby Clinics & Hospitals</h3>
+      {% for doc in osm_doctors %}
+        <div class="doctor-card" style="background: var(--bg-body);">
+          <div class="doc-info">
+            <div class="doc-name">{{ doc.name }} <span class="osm-badge">External</span></div>
+            <div class="doc-spec">{{ doc.speciality|title }}</div>
+            <div class="doc-meta" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px;">
+              {% if doc.distance_km and doc.distance_km < 9000 %}
+              <span style="display:flex;align-items:center;gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                {{ doc.distance_km|floatformat:1 }} km
+              </span>
+              {% endif %}
+              <span style="display:flex;align-items:center;gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                {{ doc.address }}
+              </span>
+            </div>
+            {% if doc.phone %}
+              <div class="doc-meta" style="display:flex;align-items:center;gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                {{ doc.phone }}
+              </div>
+            {% endif %}
+            <div class="doc-actions" style="display: flex; gap: 0.5rem;">
+              {% if request.user.is_authenticated and request.user.patient_profile %}
+              <form method="POST" action="{% url 'auto_register_osm_doctor' %}" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="name" value="{{ doc.name }}">
+                <input type="hidden" name="speciality" value="{{ doc.speciality }}">
+                <input type="hidden" name="lat" value="{{ doc.lat }}">
+                <input type="hidden" name="lon" value="{{ doc.lon }}">
+                <input type="hidden" name="address" value="{{ doc.address }}">
+                <button type="submit" class="btn-nb btn-nb-primary">Book Slot</button>
+              </form>
+              {% endif %}
+              <a href="{{ doc.maps_url }}" target="_blank" class="btn-nb btn-nb-outline">Get Directions</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if not platform_doctors and not osm_doctors %}
+      <div style="text-align: center; padding: 3rem; background: var(--bg-body); border: 2.5px solid var(--text-primary); border-radius: var(--radius-md); font-weight: 800;">
+        No doctors found for this search. Try changing the location or specialization.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  {% if lat and lon %}
+    var map = L.map('map').setView([{{ lat }}, {{ lon }}], 13);
+  {% else %}
+    var map = L.map('map').setView([20.5937, 78.9629], 5); // Default India
+  {% endif %}
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  {% if platform_doctors %}
+    var platformIcon = L.divIcon({
+      className: 'custom-div-icon',
+      html: "<div style='background:var(--brand-teal);border:2.5px solid var(--text-primary);width:18px;height:18px;border-radius:50%;box-shadow:2px 2px 0 var(--text-primary);'></div>",
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+    {% for doc in platform_doctors %}
+      {% if doc.latitude and doc.longitude %}
+        L.marker([{{ doc.latitude }}, {{ doc.longitude }}], {icon: platformIcon})
+          .addTo(map)
+          .bindPopup("<b>{% if doc.name|slice:":3" == "Dr." %}{{ doc.name }}{% else %}Dr. {{ doc.name }}{% endif %}</b><br>{{ doc.specialization }}<br>⭐ {{ doc.rating }}");
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if osm_doctors %}
+    var osmIcon = L.divIcon({
+      className: 'custom-div-icon',
+      html: "<div style='background:#b0e0e6;border:2.5px solid var(--text-primary);width:14px;height:14px;border-radius:50%;'></div>",
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+    {% for doc in osm_doctors %}
+      L.marker([{{ doc.lat }}, {{ doc.lon }}], {icon: osmIcon})
+        .addTo(map)
+        .bindPopup("<b>{{ doc.name }}</b><br>{{ doc.speciality }}");
+    {% endfor %}
+  {% endif %}
+});
+</script>
+{% endblock %}

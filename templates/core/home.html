@@ -1,0 +1,1659 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}MediCate — AI Disease Prediction & Expert Consultation{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════════════
+   MEDICATE HOME — EXACT MENDIO-STYLE NEO-BRUTALISM
+   Font: Arial Black / Impact + Inter
+   ══════════════════════════════════════════════════════ */
+
+/* ── Global section utility ──────────────────────────── */
+.w-inner { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+/* Blue grid bg */
+.bg-blue {
+  background-color: #0038FF;
+  background-image: linear-gradient(to right,rgba(255,255,255,0.09)1px,transparent 1px),
+                    linear-gradient(to bottom,rgba(255,255,255,0.09)1px,transparent 1px);
+  background-size: 4rem 4rem;
+  color:#fff;
+}
+/* Cream grid bg */
+.bg-cream {
+  background-color: #F8F9FA;
+  background-image: linear-gradient(to right,rgba(0,0,0,0.02)1px,transparent 1px),
+                    linear-gradient(to bottom,rgba(0,0,0,0.02)1px,transparent 1px);
+  background-size: 3rem 3rem;
+  color:#111;
+}
+.bg-white-solid { background:#fff; color:#111; }
+
+/* Section label */
+.s-label {
+  font-size: 0.7rem; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  color: #0038FF; margin-bottom: 6px; display: block;
+}
+.s-label-yellow { color: #CCFF00; }
+
+/* Section heading — Mendio style with hard text-shadow */
+.s-heading {
+  font-family: "Arial Black", Impact, sans-serif;
+  font-weight: 900; font-size: clamp(2rem, 5vw, 3.5rem);
+  text-transform: uppercase; tracking: tight; line-height: 1.05;
+  color: #0A0A0A;
+}
+.s-heading-white {
+  color: #fff;
+  text-shadow:
+    1px 1px 0 #001A99, 2px 2px 0 #001A99, 3px 3px 0 #001A99,
+    4px 4px 0 #001A99, 5px 5px 0 #001A99, 6px 6px 0 #001A99;
+}
+.s-subheading {
+  font-size: 0.8rem; font-weight: 600; color: #71717A; margin-top: 8px;
+  max-width: 560px;
+}
+.s-subheading-light { color: rgba(255,255,255,0.75); }
+
+/* ── HERO ──────────────────────────────────────────── */
+#hero {
+  min-height: 88vh;
+  background-color: #0038FF;
+  background-image: linear-gradient(to right,rgba(255,255,255,0.13)1px,transparent 1px),
+                    linear-gradient(to bottom,rgba(255,255,255,0.13)1px,transparent 1px);
+  background-size: 4rem 4rem;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px 24px 120px;
+  position: relative; overflow: hidden;
+  text-align: center;
+}
+.hero-title-row { width:100%; display:flex; justify-content:center; margin-bottom:2px; }
+.hero-line-1 {
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: clamp(2.5rem,8vw,80px);
+  font-weight: 900; text-transform: uppercase;
+  color: #CCFF00; letter-spacing:-0.03em; line-height:0.9;
+  text-shadow:
+    1px 1px 0 #001A99, 2px 2px 0 #001A99, 3px 3px 0 #001A99,
+    4px 4px 0 #001A99, 5px 5px 0 #001A99, 6px 6px 0 #001A99,
+    7px 7px 0 #001A99, 8px 8px 0 #001A99;
+}
+.hero-line-2 {
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: clamp(2.2rem,6.5vw,70px);
+  font-weight: 900; text-transform: uppercase;
+  color: #fff; letter-spacing:-0.03em; line-height:0.9;
+  text-shadow:
+    1px 1px 0 #001A99, 2px 2px 0 #001A99, 3px 3px 0 #001A99,
+    4px 4px 0 #001A99, 5px 5px 0 #001A99, 6px 6px 0 #001A99,
+    7px 7px 0 #001A99, 8px 8px 0 #001A99;
+}
+.hero-line-3 {
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: clamp(2.5rem,7.5vw,80px);
+  font-weight: 900; text-transform: uppercase;
+  color: #fff; letter-spacing:-0.03em; line-height:0.9;
+  text-shadow:
+    1px 1px 0 #001A99, 2px 2px 0 #001A99, 3px 3px 0 #001A99,
+    4px 4px 0 #001A99, 5px 5px 0 #001A99, 6px 6px 0 #001A99,
+    7px 7px 0 #001A99, 8px 8px 0 #001A99;
+}
+.hero-stats {
+  display: flex; align-items:center; gap: 6px;
+  font-size:0.7rem; font-weight:800; color:rgba(255,255,255,0.9);
+  margin-bottom: 14px; text-transform:uppercase; letter-spacing:0.06em;
+  justify-content: center;
+}
+.hero-stats .dot { opacity:.4; }
+.hero-stats .star { color:#CCFF00; }
+.hero-search-wrap {
+  max-width: 620px; width:100%; margin: 0 auto;
+}
+.hero-search-label {
+  color:#fff; font-size:1rem; font-weight:900;
+  tracking-tight; margin-bottom:12px; letter-spacing:-0.01em;
+}
+.hero-search {
+  display:flex; align-items:center;
+  background:#fff; border:2.5px solid #000;
+  border-radius:18px; padding:6px;
+  box-shadow: 4px 4px 0 #000;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.hero-search:focus-within {
+  transform: translate(1px,1px);
+  box-shadow: 2px 2px 0 #000;
+}
+.hero-search input {
+  flex:1; border:none; outline:none; background:transparent;
+  font-size:0.85rem; font-weight:700; color:#000;
+  padding: 10px 12px;
+}
+.hero-search input::placeholder { color:#9CA3AF; }
+.hero-search button {
+  background:#CCFF00; color:#000;
+  border:1.5px solid #000; border-radius:12px;
+  padding:10px 20px;
+  font-size:0.75rem; font-weight:900; text-transform:uppercase;
+  letter-spacing:0.06em; cursor:pointer;
+  box-shadow: 2px 2px 0 #000;
+  transition: all 0.15s; white-space:nowrap;
+}
+.hero-search button:hover { background:#b5e600; }
+.hero-quick { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:14px; }
+.hero-quick-btn {
+  background:rgba(255,255,255,0.12); color:#fff;
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:999px; padding:6px 14px;
+  font-size:0.7rem; font-weight:800; text-transform:uppercase;
+  letter-spacing:0.04em; cursor:pointer; text-decoration:none;
+  transition: background 0.15s;
+}
+.hero-quick-btn:hover { background:rgba(255,255,255,0.22); }
+
+/* Hero floating cards */
+.hero-float-left {
+  position:absolute; bottom:10%; left:3%;
+  width:190px; transform:rotate(-8deg);
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.3);
+  border-radius:24px; padding:16px;
+  color:#fff; display:flex; flex-direction:column; gap:8px;
+  transition: transform 0.5s; cursor:default;
+}
+.hero-float-left:hover { transform:rotate(0deg) scale(1.05); }
+.hero-float-right {
+  position:absolute; top:18%; right:3%;
+  width:190px; transform:rotate(8deg);
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.3);
+  border-radius:24px; padding:16px;
+  color:#fff;
+  transition: transform 0.5s; cursor:default;
+}
+.hero-float-right:hover { transform:rotate(0deg) scale(1.05); }
+.float-avatar {
+  width:40px;height:40px;border-radius:50%;overflow:hidden;
+  border:1.5px solid rgba(255,255,255,0.4);
+}
+.float-avatar img { width:100%;height:100%;object-fit:cover; }
+.float-badge-green {
+  background:#10B981;color:#fff;
+  font-size:0.6rem;font-weight:900;
+  padding:3px 8px;border-radius:999px;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.float-pulse { width:6px;height:6px;background:#fff;border-radius:50%;animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.4;} }
+
+/* ── TICKER ───────────────────────────────────────── */
+.ticker-bar {
+  background:#CCFF00;
+  border-top:2.5px solid #000; border-bottom:2.5px solid #000;
+  padding:13px 0; overflow:hidden; white-space:nowrap;
+}
+.ticker-track {
+  display:inline-flex; gap:0;
+  animation:tickerScroll 25s linear infinite;
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:0.8rem; font-weight:900; text-transform:uppercase;
+  letter-spacing:0.04em; color:#000;
+}
+.t-sep { color:#0038FF; padding:0 8px; }
+@keyframes tickerScroll {
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-50%)}
+}
+
+/* ── HOW IT WORKS ─────────────────────────────────── */
+#how-it-works { padding: 80px 0; }
+.hiw-steps {
+  display:flex; align-items:stretch; justify-content:center;
+  gap:0; margin-top:48px; flex-wrap:nowrap;
+}
+.hiw-card {
+  flex:1; min-width:220px; max-width:340px;
+  background:#F8F9FA;
+  border:1.5px solid rgba(0,0,0,0.07);
+  border-radius:32px; padding:28px 24px 24px;
+  display:flex;flex-direction:column; align-items:center;
+  justify-content:space-between; min-height:300px;
+  position:relative;
+  transition:transform 0.3s, box-shadow 0.3s;
+}
+.hiw-card:hover { transform:scale(1.03); box-shadow:0 8px 24px rgba(0,0,0,0.08); }
+.hiw-step-badge {
+  position:absolute; top:18px; left:18px;
+  font-size:0.65rem; font-weight:900; text-transform:uppercase;
+  letter-spacing:0.1em; color:#0038FF;
+  background:rgba(0,56,255,0.08);
+  padding:4px 10px; border-radius:999px;
+}
+.hiw-body { text-align:center; flex:1; display:flex;flex-direction:column;justify-content:center; margin-top:16px; }
+.hiw-title {
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:clamp(1rem,2.5vw,1.3rem);
+  font-weight:900; text-transform:uppercase; color:#111;
+  line-height:1.05; letter-spacing:-0.01em; margin-bottom:8px;
+}
+.hiw-desc {
+  font-size:0.7rem; font-weight:600; color:#9CA3AF;
+  max-width:200px; margin:0 auto; line-height:1.5;
+}
+.hiw-preview { margin-top:20px; display:flex; justify-content:center; }
+
+/* Doctor chip in step 1 */
+.hiw-doc-chip {
+  display:inline-flex;align-items:center;gap:8px;
+  background:#0038FF;color:#fff;
+  padding:6px 12px; border-radius:16px;
+  border:1.5px solid #0038FF;
+  box-shadow:0 4px 12px rgba(0,56,255,0.4);
+}
+.hiw-doc-chip-avatar {
+  width:28px;height:28px;border-radius:50%;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.35); flex-shrink:0;
+}
+.hiw-doc-chip-avatar img { width:100%;height:100%;object-fit:cover; }
+.hiw-doc-chip-name {font-size:0.65rem;font-weight:900;display:block;}
+.hiw-doc-chip-sub {font-size:0.55rem;font-weight:700;color:rgba(255,255,255,0.7);}
+.hiw-price-pill {
+  background:#CCFF00;color:#000;font-size:0.65rem;font-weight:900;
+  padding:3px 8px;border-radius:999px;border:1px solid rgba(0,0,0,0.07);
+}
+
+/* Step 2 preview */
+.hiw-pay-chip {
+  display:inline-flex;align-items:center;gap:8px;
+  background:#0038FF;color:#fff;
+  padding:6px 14px 6px 10px; border-radius:16px;
+  position:relative;
+}
+.hiw-pay-chip-label { font-size:0.65rem;font-weight:900;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:8px; }
+.hiw-pay-chip-brand { font-size:0.6rem;font-weight:900;letter-spacing:0.1em;color:#CCFF00; }
+.hiw-pay-go {
+  position:absolute;bottom:-10px;right:20%;
+  width:24px;height:24px;background:#CCFF00;
+  border:2px solid #fff;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* Step 3 gate pass */
+.hiw-gate-pass {
+  background:#CCFF00;color:#000;font-weight:900;
+  padding:10px 20px;border-radius:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  transform:rotate(-2deg);
+  border:1px solid rgba(0,0,0,0.07);
+  text-align:center; min-width:130px;
+}
+.hiw-gate-pass-label { font-size:0.55rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:rgba(0,0,0,0.5); }
+.hiw-gate-pass-code { font-family:"Arial Black",monospace;font-size:1rem;letter-spacing:0.08em;margin-top:2px; }
+
+/* Arrow between steps */
+.hiw-arrow {
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0; width:40px; align-self:center;
+}
+
+/* ── TOP RATED DOCTORS ─────────────────────────────── */
+#top-doctors { padding:64px 0 80px; }
+.trd-header {
+  display:flex;align-items:flex-end;justify-content:space-between;
+  flex-wrap:wrap; gap:16px; margin-bottom:32px;
+}
+.trd-scroll {
+  display:flex; gap:20px;
+  overflow-x:auto; padding-bottom:12px;
+  scroll-snap-type:x mandatory;
+  -ms-overflow-style:none; scrollbar-width:none;
+}
+.trd-scroll::-webkit-scrollbar { display:none; }
+
+.trd-card {
+  flex-shrink:0; width:230px;
+  background:#fff; border:2px solid #000;
+  border-radius:28px;
+  box-shadow:4px 4px 0 #000;
+  padding:20px; display:flex;flex-direction:column;
+  scroll-snap-align:start;
+  cursor:pointer;
+  transition:box-shadow 0.2s, transform 0.2s;
+}
+.trd-card:hover {
+  box-shadow:1.5px 1.5px 0 #000;
+  transform:translate(2.5px,2.5px);
+}
+.trd-card-top { display:flex;flex-direction:column;align-items:center;text-align:center;padding-bottom:12px; }
+.trd-avatar {
+  width:56px;height:56px;border-radius:50%;overflow:hidden;
+  border:1.5px solid rgba(0,0,0,0.1);margin-bottom:8px;
+}
+.trd-avatar img { width:100%;height:100%;object-fit:cover; }
+.trd-rating { display:flex;align-items:center;gap:4px;margin-bottom:2px; }
+.trd-rating-num { font-size:1.1rem;font-weight:900;color:#111;line-height:1; }
+.trd-star { fill:#F59E0B;color:#F59E0B;width:14px;height:14px; }
+.trd-jobs { font-size:0.6rem;font-weight:900;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em; }
+.trd-badge-green {
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:0.55rem;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;
+  background:rgba(16,185,129,0.1);color:#065F46;
+  border:1px solid rgba(16,185,129,0.2);
+  border-radius:999px;padding:3px 8px; margin-top:6px;
+}
+.trd-badge-blue {
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:0.55rem;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;
+  background:rgba(0,56,255,0.08);color:#0038FF;
+  border:1px solid rgba(0,56,255,0.2);
+  border-radius:999px;padding:3px 8px; margin-top:6px;
+}
+.trd-card-body {
+  border-top:1px solid rgba(0,0,0,0.06);
+  padding-top:12px; display:flex;
+  align-items:center; justify-content:space-between; margin-bottom:14px;
+}
+.trd-name { font-size:0.8rem;font-weight:900;color:#111;line-height:1.2; }
+.trd-spec { font-size:0.6rem;font-weight:700;color:#94A3B8;margin-top:2px; }
+.trd-rate-label { font-size:0.55rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.05em;text-align:right; }
+.trd-rate-val { font-size:0.75rem;font-weight:900;color:#0038FF;text-align:right;display:block;margin-top:2px; }
+.trd-btn {
+  width:100%;background:#CCFF00;color:#000;
+  border:1.5px solid #000;border-radius:12px;
+  padding:10px; font-size:0.6rem;font-weight:900;
+  text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;
+  box-shadow:2px 2px 0 #000;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  text-decoration:none;
+  transition:all 0.2s;
+}
+.trd-btn:hover { background:#0038FF;color:#fff;box-shadow:none;transform:translate(1px,1px); }
+
+/* ── POPULAR SERVICES GRID ────────────────────────── */
+#services { padding:80px 0; }
+.svc-grid-title { margin-bottom:36px; }
+.svc-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+.svc-tile {
+  position:relative; border-radius:32px;
+  padding:20px; display:flex; flex-direction:column;
+  justify-content:space-between;
+  height:140px; overflow:hidden;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.15);
+  background:#184bf4;
+  transition:all 0.3s;
+}
+.svc-tile:hover { background:#2354ff;border-color:rgba(255,255,255,0.28);transform:translateY(-2px); }
+.svc-tile.wide { grid-column:span 2; }
+.svc-tile-name {
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:clamp(0.9rem,2.5vw,1.1rem);
+  font-weight:900; text-transform:uppercase;
+  color:#CCFF00; letter-spacing:-0.01em; line-height:1.1;
+  position:relative;z-index:2;
+}
+.svc-tile-time {
+  font-size:0.65rem;font-weight:900;text-transform:uppercase;
+  letter-spacing:0.06em;color:rgba(255,255,255,0.8);
+  margin-top:10px;position:relative;z-index:2;
+}
+.svc-tile-popular {
+  background:#CCFF00;color:#000;
+  font-size:0.5rem;font-weight:900;text-transform:uppercase;
+  letter-spacing:0.06em;padding:2px 7px;border-radius:4px;
+  border:1px solid rgba(255,255,255,0.2);
+  display:inline-block;margin-left:6px;vertical-align:middle;
+  line-height:1.5;
+}
+.svc-tile-emoji {
+  position:absolute;bottom:8px;right:14px;z-index:1;
+  font-size:3.5rem;line-height:1;
+  transform:rotate(8deg);
+  filter:drop-shadow(2px 4px 4px rgba(0,0,0,0.15));
+  transition:transform 0.3s;
+  user-select:none;
+}
+.svc-tile:hover .svc-tile-emoji { transform:rotate(0deg) scale(1.1); }
+.svc-tile-more {
+  background:#184bf4;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.svc-tile-more .svc-tile-name { color:#CCFF00; }
+.svc-more-arrow {
+  width:32px;height:32px;background:#CCFF00;
+  border-radius:50%;border:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;justify-content:center;
+  align-self:flex-end;
+  transition:transform 0.2s;
+}
+.svc-tile-more:hover .svc-more-arrow { transform:scale(1.1); }
+
+/* ── TRUST PROCESS (5-step) ──────────────────────── */
+#trust-process { padding:80px 0; }
+.tp-steps {
+  display:flex;align-items:stretch;gap:0;
+  overflow-x:auto;scrollbar-width:none;
+  margin-top:40px;
+}
+.tp-steps::-webkit-scrollbar { display:none; }
+.tp-card {
+  flex:1; min-width:200px; max-width:260px;
+  background:#fff;color:#111;
+  border:2px solid #000;border-radius:20px;
+  padding:20px;
+  display:flex;flex-direction:column;gap:12px;
+  position:relative;
+}
+.tp-step-tag {
+  font-size:0.6rem;font-weight:900;text-transform:uppercase;
+  letter-spacing:0.08em;color:#9CA3AF;
+  border:1.5px solid #000;border-radius:999px;
+  display:inline-block;padding:3px 10px;align-self:flex-start;
+}
+.tp-icon {
+  width:36px;height:36px;
+  background:#fff;border:2px solid #000;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;position:absolute;top:16px;right:16px;
+}
+.tp-title {
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:1rem;font-weight:900;text-transform:uppercase;color:#111;
+  letter-spacing:-0.01em;line-height:1.1;
+}
+.tp-desc { font-size:0.7rem;font-weight:600;color:#6B7280;line-height:1.6; }
+.tp-arrow {
+  flex-shrink:0;width:32px;
+  display:flex;align-items:center;justify-content:center;align-self:center;
+}
+
+/* ── WHY TRUST / SMART CARD CAROUSEL ─────────────── */
+#why-trust { padding:80px 0; }
+.wt-split { display:flex;gap:60px;align-items:center;flex-wrap:wrap; }
+.wt-left { flex:1;min-width:260px;max-width:480px; }
+.wt-heading {
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:clamp(2.2rem,5.5vw,4.5rem);
+  font-weight:900;text-transform:uppercase;color:#fff;
+  line-height:0.95;letter-spacing:-0.02em;
+  text-shadow:
+    1px 1px 0 #001A99,2px 2px 0 #001A99,3px 3px 0 #001A99,
+    4px 4px 0 #001A99,5px 5px 0 #001A99,6px 6px 0 #001A99;
+  margin-bottom:16px;
+}
+.wt-desc {
+  font-size:0.95rem;font-weight:700;color:rgba(255,255,255,0.85);
+  margin-bottom:28px;line-height:1.5;max-width:380px;
+}
+.wt-avatars {
+  display:flex;align-items:center;gap:0;margin-bottom:6px;
+}
+.wt-avatar-img {
+  width:36px;height:36px;border-radius:50%;overflow:hidden;
+  border:2px solid #0038FF;margin-left:-8px;
+}
+.wt-avatar-img:first-child { margin-left:0; }
+.wt-avatar-img img { width:100%;height:100%;object-fit:cover; }
+.wt-count {
+  background:#CCFF00;color:#000;font-weight:900;font-size:0.75rem;
+  border:2px solid #0038FF;border-radius:999px;
+  padding:4px 10px;margin-left:6px;
+}
+.wt-trusted { font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.75);margin-top:4px; }
+
+/* Card carousel */
+.wt-right { flex:1;min-width:280px;max-width:400px;position:relative; }
+.wt-card-track {
+  position:relative;width:100%;
+  border:2.5px solid #000;border-radius:28px;
+  background:#fff;color:#111;
+  overflow:hidden; box-shadow:8px 8px 0 rgba(0,0,0,0.35);
+}
+/* Each slide */
+.wt-slide {
+  display:none;padding:28px;
+  animation:slideIn 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.wt-slide.active { display:block; }
+@keyframes slideIn {
+  from{opacity:0;transform:translateX(30px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.wt-slide-badge {
+  background:#CCFF00;border:1.5px solid #000;border-radius:999px;
+  font-size:0.6rem;font-weight:900;text-transform:uppercase;
+  padding:4px 12px;display:inline-block;margin-bottom:20px;
+  letter-spacing:0.06em;
+}
+.wt-slide-icon {
+  width:52px;height:52px;border:2px solid #000;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;margin-bottom:16px;
+}
+.wt-slide-title {
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:1.15rem;font-weight:900;text-transform:uppercase;
+  letter-spacing:-0.01em;margin-bottom:6px;
+}
+.wt-slide-sub { font-size:0.8rem;font-weight:500;color:#6B7280;margin-bottom:18px;line-height:1.5; }
+.wt-check {
+  display:flex;align-items:center;gap:10px;
+  font-size:0.85rem;font-weight:800;margin-bottom:10px;
+}
+.wt-check-dot {
+  width:22px;height:22px;background:#CCFF00;border:2px solid #000;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.wt-box {
+  border:2px solid #000;border-radius:16px;padding:14px;margin-top:16px;
+}
+.wt-box-label { font-size:0.6rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px; }
+.wt-otp-row { display:flex;align-items:center;justify-content:space-between; }
+.wt-otp-code { font-family:"Arial Black",monospace;font-size:1.4rem;font-weight:900;color:#0038FF; }
+.wt-box-meta { font-size:0.75rem;font-weight:700;color:#374151;margin-top:6px;display:flex;justify-content:space-between; }
+
+/* Slide dots */
+.wt-dots {
+  display:flex;gap:6px;justify-content:center;margin-top:14px;
+}
+.wt-dot {
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,0.35);cursor:pointer;
+  transition:all 0.3s;
+}
+.wt-dot.active { background:#CCFF00;width:20px;border-radius:999px; }
+
+/* ── TESTIMONIALS CAROUSEL ─────────────────────────── */
+#testimonials { padding:80px 0; }
+.test-header { text-align:center;margin-bottom:56px; }
+.test-carousel { position:relative; }
+.test-track-wrapper { overflow:hidden;position:relative; }
+.test-track {
+  display:flex;gap:20px;align-items:center;
+  transition:transform 0.5s cubic-bezier(0.16,1,0.3,1);
+  will-change:transform;
+}
+.test-card {
+  flex-shrink:0;width:320px;
+  background:#fff;color:#111;
+  border:2px solid #000;border-radius:20px;
+  padding:28px;
+  box-shadow:4px 4px 0 #000;
+  transition:all 0.4s;
+  position:relative;
+}
+.test-card.center {
+  background:#0038FF;color:#fff;
+  width:350px;
+  box-shadow:6px 6px 0 #000;
+  transform:scale(1.03);
+  z-index:10;
+}
+.test-card.center .test-review { color:rgba(255,255,255,0.9); }
+.test-card.center .test-author-name { color:#CCFF00; }
+.test-card.center .test-author-role { color:rgba(255,255,255,0.65); }
+.test-card.center .test-star { color:#CCFF00; }
+.test-card-avatar {
+  width:44px;height:44px;border-radius:50%;overflow:hidden;
+  border:2px solid rgba(0,0,0,0.12);margin-bottom:12px;
+}
+.test-card-avatar img { width:100%;height:100%;object-fit:cover; }
+.test-stars { color:#F59E0B;font-size:1rem;margin-bottom:12px; }
+.test-card.center .test-stars { color:#CCFF00; }
+.test-review {
+  font-size:0.85rem;font-weight:600;line-height:1.7;
+  color:#374151;margin-bottom:16px;font-style:italic;
+}
+.test-author-name { font-weight:900;font-size:0.9rem; }
+.test-author-role { font-size:0.7rem;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em; }
+.test-nav {
+  display:flex;align-items:center;justify-content:center;gap:14px;
+  margin-top:32px;
+}
+.test-nav-btn {
+  width:44px;height:44px;border:2px solid #000;border-radius:50%;
+  background:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+  font-size:1.1rem;
+}
+.test-nav-btn:hover { background:#CCFF00;box-shadow:2px 2px 0 #000;transform:translate(-1px,-1px); }
+
+/* ── FAQ ──────────────────────────────────────────── */
+#faq { padding:80px 0; }
+.faq-wrap { max-width:800px;margin:0 auto;margin-top:44px; }
+.faq-item {
+  border:2px solid #000;border-radius:16px;
+  margin-bottom:10px;overflow:hidden;
+  box-shadow:3px 3px 0 #000;
+}
+.faq-q {
+  width:100%;display:flex;align-items:center;
+  justify-content:space-between;padding:18px 24px;
+  background:#fff;border:none;cursor:pointer;
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:0.85rem;font-weight:900;text-transform:uppercase;
+  text-align:left;gap:12px;
+  transition:background 0.15s;letter-spacing:0.01em;
+}
+.faq-q:hover { background:#F8F9FA; }
+.faq-q.active { background:#0038FF;color:#fff; }
+.faq-chevron { flex-shrink:0;transition:transform 0.3s; }
+.faq-q.active .faq-chevron { transform:rotate(180deg); }
+.faq-a { max-height:0;overflow:hidden;transition:max-height 0.4s cubic-bezier(0.16,1,0.3,1); background:#F8F9FA; }
+.faq-a.open { max-height:300px; }
+.faq-a-inner { padding:18px 24px;font-size:0.875rem;font-weight:500;color:#4B5563;line-height:1.7;border-top:2px solid #000; }
+
+/* ── CTA ──────────────────────────────────────────── */
+#cta { padding:100px 0;text-align:center; }
+.cta-heading {
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:clamp(2rem,5.5vw,4rem);font-weight:900;
+  text-transform:uppercase;color:#fff;
+  text-shadow:
+    1px 1px 0 #001A99,2px 2px 0 #001A99,3px 3px 0 #001A99,
+    4px 4px 0 #001A99,5px 5px 0 #001A99,6px 6px 0 #001A99;
+  margin-bottom:14px;letter-spacing:-0.02em;
+}
+.cta-sub { font-size:1rem;font-weight:700;color:rgba(255,255,255,0.8);margin-bottom:36px; }
+.cta-btns { display:flex;gap:14px;justify-content:center;flex-wrap:wrap; }
+.cta-btn-primary {
+  background:#CCFF00;color:#000;border:2.5px solid #000;border-radius:16px;
+  padding:16px 36px;font-family:"Arial Black",Impact,sans-serif;
+  font-size:0.85rem;font-weight:900;text-transform:uppercase;
+  cursor:pointer;box-shadow:4px 4px 0 #000;text-decoration:none;
+  display:inline-block;letter-spacing:0.04em;
+  transition:transform 0.15s,box-shadow 0.15s;
+}
+.cta-btn-primary:hover { transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000; }
+.cta-btn-secondary {
+  background:transparent;color:#fff;border:2.5px solid rgba(255,255,255,0.5);
+  border-radius:16px;padding:16px 36px;
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:0.85rem;font-weight:900;text-transform:uppercase;
+  cursor:pointer;text-decoration:none;display:inline-block;
+  transition:border-color 0.15s,background 0.15s;
+}
+.cta-btn-secondary:hover { border-color:#fff;background:rgba(255,255,255,0.1); }
+
+/* ── CONTACT ──────────────────────────────────────── */
+#contact { padding:80px 0; }
+.ct-split { display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap; }
+.ct-left { flex:1;min-width:260px; }
+.ct-heading {
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:clamp(2rem,4.5vw,3.5rem);font-weight:900;
+  text-transform:uppercase;color:#fff;
+  text-shadow:1px 1px 0 #001A99,2px 2px 0 #001A99,3px 3px 0 #001A99,
+    4px 4px 0 #001A99;
+  margin-bottom:12px;
+}
+.ct-sub { font-size:0.85rem;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:28px;line-height:1.6; }
+.ct-info-card {
+  background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.3);
+  border-radius:16px;padding:16px 20px;margin-bottom:12px;
+  display:flex;align-items:center;gap:12px;
+}
+.ct-info-icon { font-size:1.2rem; }
+.ct-info-label { font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.6);margin-bottom:2px; }
+.ct-info-val { font-size:0.95rem;font-weight:900;color:#fff; }
+.ct-right {
+  flex:1;min-width:260px;
+  background:#fff;color:#111;border:2.5px solid #000;
+  border-radius:24px;padding:32px;box-shadow:8px 8px 0 rgba(0,0,0,0.3);
+}
+.ct-form label {
+  display:block;font-size:0.65rem;font-weight:900;
+  text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;color:#111;
+}
+.ct-form input, .ct-form textarea {
+  width:100%;padding:12px 16px;border:2px solid #000;
+  border-radius:12px;font-family:inherit;font-size:0.875rem;
+  font-weight:600;background:#F8F9FA;margin-bottom:16px;outline:none;
+  transition:border-color 0.15s,box-shadow 0.15s;
+}
+.ct-form input:focus,.ct-form textarea:focus { border-color:#0038FF;box-shadow:2px 2px 0 #0038FF; }
+.ct-form textarea { height:120px;resize:vertical; }
+.ct-chips { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px; }
+.ct-chip {
+  padding:7px 14px;border:2px solid #000;border-radius:999px;
+  font-size:0.7rem;font-weight:900;text-transform:uppercase;
+  cursor:pointer;background:#fff;
+  transition:all 0.15s;user-select:none;letter-spacing:0.04em;
+}
+.ct-chip:hover,.ct-chip.sel { background:#CCFF00; }
+.ct-submit {
+  width:100%;padding:14px;background:#CCFF00;color:#000;
+  border:2.5px solid #000;border-radius:14px;
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:0.8rem;font-weight:900;text-transform:uppercase;
+  cursor:pointer;box-shadow:4px 4px 0 #000;
+  letter-spacing:0.06em;
+  transition:transform 0.15s,box-shadow 0.15s;
+}
+.ct-submit:hover { transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000; }
+
+/* ── BOOKING MODAL ────────────────────────────────── */
+.bk-overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:10001;display:flex;align-items:center;justify-content:center;
+  padding:20px;opacity:0;pointer-events:none;transition:opacity 0.25s;
+}
+.bk-overlay.open { opacity:1;pointer-events:all; }
+.bk-modal {
+  background:#fff;color:#111;border:2.5px solid #000;border-radius:24px;
+  padding:32px;max-width:460px;width:100%;box-shadow:8px 8px 0 #000;
+  position:relative;
+  transform:translateY(20px);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.bk-overlay.open .bk-modal { transform:translateY(0); }
+.bk-close {
+  position:absolute;top:14px;right:14px;width:32px;height:32px;
+  background:#CCFF00;border:2px solid #000;border-radius:50%;
+  font-size:0.85rem;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.bk-header { display:flex;align-items:center;gap:14px;padding-bottom:18px;border-bottom:2px solid #000;margin-bottom:18px; }
+.bk-icon { font-size:2.2rem; }
+.bk-name { font-family:"Arial Black",Impact,sans-serif;font-size:1.1rem;font-weight:900;text-transform:uppercase; }
+.bk-meta { font-size:0.75rem;font-weight:600;color:#6B7280; }
+.bk-price-box { background:#F8F9FA;border:2px solid #000;border-radius:14px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between; }
+.bk-price { font-family:"Arial Black",Impact,sans-serif;font-size:1.6rem;font-weight:900;color:#0038FF; }
+.bk-price-note { font-size:0.7rem;font-weight:600;color:#9CA3AF;text-align:right; }
+.bk-action {
+  width:100%;padding:14px;background:#0038FF;color:#fff;
+  border:2.5px solid #000;border-radius:14px;
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:0.8rem;font-weight:900;text-transform:uppercase;
+  cursor:pointer;box-shadow:4px 4px 0 #000;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  text-decoration:none;letter-spacing:0.04em;
+  transition:transform 0.15s,box-shadow 0.15s;
+}
+.bk-action:hover { transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000; }
+
+/* ── RESPONSIVE ───────────────────────────────────── */
+@media(max-width:900px){
+  .hiw-steps { flex-wrap:wrap;gap:16px; }
+  .hiw-arrow { display:none; }
+  .svc-grid { grid-template-columns:repeat(2,1fr); }
+  .svc-tile.wide { grid-column:span 2; }
+  .wt-split { flex-direction:column; }
+  .ct-split { flex-direction:column; }
+  .hero-float-left,.hero-float-right { display:none; }
+  .tp-steps { gap:12px; }
+  .tp-arrow { display:none; }
+}
+@media(max-width:600px){
+  .svc-grid { grid-template-columns:1fr 1fr; }
+  .svc-tile.wide { grid-column:span 2; }
+  .hiw-steps { flex-direction:column;align-items:stretch; }
+  .hiw-card { max-width:100%; }
+  .test-card { width:280px; }
+  .test-card.center { width:300px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════ -->
+<section id="hero">
+  <div style="width:100%;max-width:900px;margin:0 auto;position:relative;z-index:10;text-align:center;">
+    <!-- Hero stats row -->
+    <div class="hero-stats">
+      <span class="star">★</span> 4.9 Rating
+      <span class="dot">•</span> 1200+ Verified Doctors
+      <span class="dot">•</span> 50K+ Consultations
+    </div>
+
+    <!-- 3-line staggered title -->
+    <div class="hero-title-row" style="justify-content:flex-start;padding-left:12%;">
+      <h1 class="hero-line-1">#AI-POWERED</h1>
+    </div>
+    <div class="hero-title-row">
+      <h1 class="hero-line-2">EXPERT DOCTORS AT</h1>
+    </div>
+    <div class="hero-title-row" style="justify-content:flex-end;padding-right:8%;">
+      <h1 class="hero-line-3">YOUR DOORSTEP</h1>
+    </div>
+
+    <!-- Search bar -->
+    <div class="hero-search-wrap" style="margin-top:36px;">
+      <p class="hero-search-label">What medical help do you need today?</p>
+      <form class="hero-search" method="GET" action="{% url 'find_doctors' %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" style="flex-shrink:0;margin-left:8px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.34-4.34"/></svg>
+        <input type="text" name="search" placeholder="Search cardiology, dermatology, general medicine...">
+        <button type="submit">Find Doctors</button>
+      </form>
+      <!-- Quick action chips -->
+      <div class="hero-quick">
+        <a href="{% url 'find_doctors' %}?search=General+Physician" class="hero-quick-btn">General</a>
+        <a href="{% url 'find_doctors' %}?search=Cardiologist" class="hero-quick-btn">Cardiology</a>
+        <a href="{% url 'find_doctors' %}?search=Dermatologist" class="hero-quick-btn">Skin Care</a>
+        <a href="{% url 'check_disease' %}" class="hero-quick-btn">AI Scan FREE</a>
+        <a href="{% url 'find_doctors' %}?search=Pediatrician" class="hero-quick-btn">Pediatrics</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating cards (desktop) -->
+  <div class="hero-float-left">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="float-avatar">
+        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop" alt="Dr. Ramesh">
+      </div>
+      <span style="background:#F59E0B;color:#000;font-size:0.65rem;font-weight:900;padding:3px 8px;border-radius:999px;">⭐ 4.9</span>
+    </div>
+    <div>
+      <p style="font-weight:900;font-size:0.8rem;">Dr. Ramesh Kumar</p>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#CCFF00" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+        <p style="font-size:0.65rem;color:rgba(255,255,255,0.75);font-weight:700;">Verified Cardiologist</p>
+      </div>
+    </div>
+    <div style="height:1px;background:rgba(255,255,255,0.2);margin:8px 0;"></div>
+    <div style="display:flex;justify-content:space-between;font-size:0.65rem;font-weight:700;">
+      <span style="background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:8px;color:#CCFF00;">312 Consultations</span>
+      <span>₹599 onwards</span>
+    </div>
+  </div>
+
+  <div class="hero-float-right">
+    <div style="margin-bottom:10px;">
+      <span class="float-badge-green"><span class="float-pulse"></span> Doctor On Route</span>
+    </div>
+    <div>
+      <span style="display:block;font-size:0.55rem;color:rgba(255,255,255,0.6);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Access Verification</span>
+      <span style="font-size:0.85rem;font-weight:900;">OTP Generated</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+      <div style="width:28px;height:28px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.15);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#CCFF00" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <div>
+        <span style="display:block;font-size:0.55rem;color:rgba(255,255,255,0.6);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Estimated Arrival</span>
+        <span style="font-size:0.75rem;font-weight:900;color:#CCFF00;">ETA 12 mins</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     TICKER
+══════════════════════════════════════════════════════ -->
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <span>HOME MAINTENANCE</span><span class="t-sep">⚡</span>
+    <span>AI SYMPTOM SCAN</span><span class="t-sep">🩺</span>
+    <span>CARDIOLOGY</span><span class="t-sep">❤️</span>
+    <span>DERMATOLOGY</span><span class="t-sep">💧</span>
+    <span>NEUROLOGY</span><span class="t-sep">🧬</span>
+    <span>DEEP CLEANING</span><span class="t-sep">✨</span>
+    <span>PEDIATRICS</span><span class="t-sep">🧸</span>
+    <span>ORTHOPEDICS</span><span class="t-sep">🦴</span>
+    <!-- repeat -->
+    <span>HOME MAINTENANCE</span><span class="t-sep">⚡</span>
+    <span>AI SYMPTOM SCAN</span><span class="t-sep">🩺</span>
+    <span>CARDIOLOGY</span><span class="t-sep">❤️</span>
+    <span>DERMATOLOGY</span><span class="t-sep">💧</span>
+    <span>NEUROLOGY</span><span class="t-sep">🧬</span>
+    <span>DEEP CLEANING</span><span class="t-sep">✨</span>
+    <span>PEDIATRICS</span><span class="t-sep">🧸</span>
+    <span>ORTHOPEDICS</span><span class="t-sep">🦴</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     HOW IT WORKS  (light bg, rounded card, with arrows)
+══════════════════════════════════════════════════════ -->
+<section class="bg-cream" id="how-it-works" style="border-bottom:2.5px solid #000;">
+  <div class="w-inner">
+    <div class="scroll-fade">
+      <span class="s-label">HOW MEDICATE WORKS</span>
+      <h2 class="s-heading">How MediCate Works</h2>
+      <p class="s-subheading">Three simple steps to connect with top-tier verified specialists and get expert care done instantly.</p>
+    </div>
+
+    <div class="hiw-steps scroll-fade">
+      <!-- Step 1 -->
+      <div class="hiw-card">
+        <div class="hiw-step-badge">Step 01</div>
+        <div class="hiw-body">
+          <h3 class="hiw-title">SELECT YOUR<br>SERVICE</h3>
+          <p class="hiw-desc">Choose from background-verified specialist doctors</p>
+        </div>
+        <div class="hiw-preview">
+          <div class="hiw-doc-chip">
+            <div class="hiw-doc-chip-avatar">
+              <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop" alt="Dr.">
+            </div>
+            <div>
+              <span class="hiw-doc-chip-name">dr.ramesh.cardio</span>
+              <span class="hiw-doc-chip-sub">312 verified consultations</span>
+            </div>
+            <div class="hiw-price-pill">₹599/visit</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div class="hiw-arrow">
+        <svg width="34" height="24" viewBox="0 0 34 24" fill="none">
+          <path d="M2 17C8 7 18 5 28 13M28 13L22 12M28 13L26 19" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="hiw-card">
+        <div class="hiw-step-badge">Step 02</div>
+        <div class="hiw-body">
+          <h3 class="hiw-title">CONFIRM<br>FLAT RATE</h3>
+          <p class="hiw-desc">Transparent fees with escrow safety, no hidden charges</p>
+        </div>
+        <div class="hiw-preview">
+          <div style="position:relative;display:inline-block;">
+            <div class="hiw-pay-chip">
+              <span class="hiw-pay-chip-label">₹299/visit</span>
+              <span class="hiw-pay-chip-brand">MEDICATE</span>
+            </div>
+            <div class="hiw-pay-go">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div class="hiw-arrow">
+        <svg width="34" height="24" viewBox="0 0 34 24" fill="none">
+          <path d="M2 17C8 7 18 5 28 13M28 13L22 12M28 13L26 19" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="hiw-card">
+        <div class="hiw-step-badge">Step 03</div>
+        <div class="hiw-body">
+          <h3 class="hiw-title">SECURE<br>ACCESS PASS</h3>
+          <p class="hiw-desc">Doctor gains entry only with a verified digital OTP gate pass</p>
+        </div>
+        <div class="hiw-preview">
+          <div class="hiw-gate-pass">
+            <div class="hiw-gate-pass-label">VERIFIED PASS</div>
+            <div class="hiw-gate-pass-code">MED-2481</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     TOP RATED DOCTORS  (light bg, horizontal scroll)
+══════════════════════════════════════════════════════ -->
+<section class="bg-white-solid" id="top-doctors" style="padding:80px 0;border-bottom:2.5px solid #000;">
+  <div class="w-inner">
+    <div class="trd-header scroll-fade">
+      <div>
+        <span class="s-label">TRUSTED &amp; VERIFIED</span>
+        <h2 class="s-heading">Top Rated Doctors</h2>
+        <p class="s-subheading">Highest-rated specialists available in your area right now</p>
+      </div>
+      <a href="{% url 'find_doctors' %}" style="background:#CCFF00;color:#000;border:2px solid #000;border-radius:12px;padding:12px 24px;font-weight:900;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;text-decoration:none;box-shadow:3px 3px 0 #000;white-space:nowrap;">View All →</a>
+    </div>
+
+    <div class="trd-scroll scroll-fade">
+      {% for doc in top_doctors %}
+      <div class="trd-card">
+        <div class="trd-card-top">
+          <div class="trd-avatar">
+            {% if doc.img %}
+              <img src="{{ doc.img.url }}" alt="{% if doc.name|slice:":3" == "Dr." %}{{ doc.name }}{% else %}Dr. {{ doc.name }}{% endif %}">
+            {% else %}
+              <!-- Unsplash placeholder based on gender/index -->
+              <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop" alt="{% if doc.name|slice:":3" == "Dr." %}{{ doc.name }}{% else %}Dr. {{ doc.name }}{% endif %}">
+            {% endif %}
+          </div>
+          <div class="trd-rating">
+            <span class="trd-rating-num">{{ doc.rating }}</span>
+            <svg class="trd-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#F59E0B"/></svg>
+          </div>
+          <span class="trd-jobs">{{ doc.total_ratings }} Consultations</span>
+          {% if doc.is_verified %}
+          <span class="trd-badge-green">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+            VERIFIED
+          </span>
+          {% else %}
+          <span class="trd-badge-blue">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+            BACKGROUND CHECKED
+          </span>
+          {% endif %}
+        </div>
+        <div class="trd-card-body">
+          <div style="flex:1;min-width:0;">
+            <div class="trd-name">{{ doc.name }}</div>
+            <div class="trd-spec">{{ doc.specialization }}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;padding-left:8px;">
+            <div class="trd-rate-label">Rate From</div>
+            <span class="trd-rate-val">₹{{ doc.fee }}</span>
+          </div>
+        </div>
+        <a href="{% url 'find_doctors' %}?search={{ doc.specialization }}" class="trd-btn">
+          BOOK NOW
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      </div>
+      {% empty %}
+      <!-- 4 Mendio-style mock cards with Unsplash photos -->
+      {% for d in "1234" %}
+      <div class="trd-card">
+        <div class="trd-card-top">
+          <div class="trd-avatar">
+            {% if forloop.counter == 1 %}<img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop" alt="Dr. Ramesh">
+            {% elif forloop.counter == 2 %}<img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop" alt="Dr. Priya">
+            {% elif forloop.counter == 3 %}<img src="https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?w=150&h=150&fit=crop" alt="Dr. Anil">
+            {% else %}<img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop" alt="Dr. Meera">
+            {% endif %}
+          </div>
+          <div class="trd-rating">
+            <span class="trd-rating-num">{% if forloop.counter == 1 %}4.9{% elif forloop.counter == 2 %}4.8{% elif forloop.counter == 3 %}5.0{% else %}4.7{% endif %}</span>
+            <svg class="trd-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#F59E0B"/></svg>
+          </div>
+          <span class="trd-jobs">{% if forloop.counter == 1 %}312{% elif forloop.counter == 2 %}180{% elif forloop.counter == 3 %}245{% else %}98{% endif %} Consultations</span>
+          {% if forloop.counter == 1 or forloop.counter == 3 %}
+          <span class="trd-badge-green"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>VERIFIED</span>
+          {% else %}
+          <span class="trd-badge-blue"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>BACKGROUND CHECKED</span>
+          {% endif %}
+        </div>
+        <div class="trd-card-body">
+          <div style="flex:1;min-width:0;">
+            <div class="trd-name">{% if forloop.counter == 1 %}Dr. Ramesh Kumar{% elif forloop.counter == 2 %}Dr. Priya Sharma{% elif forloop.counter == 3 %}Dr. Anil Verma{% else %}Dr. Meera Patel{% endif %}</div>
+            <div class="trd-spec">{% if forloop.counter == 1 %}Cardiologist{% elif forloop.counter == 2 %}Dermatologist{% elif forloop.counter == 3 %}Neurologist{% else %}Pediatrician{% endif %}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;padding-left:8px;">
+            <div class="trd-rate-label">Rate From</div>
+            <span class="trd-rate-val">{% if forloop.counter == 1 %}₹599{% elif forloop.counter == 2 %}₹399{% elif forloop.counter == 3 %}₹699{% else %}₹349{% endif %}</span>
+          </div>
+        </div>
+        <a href="{% url 'find_doctors' %}" class="trd-btn">BOOK NOW <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a>
+      </div>
+      {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     POPULAR SERVICES — GRID STYLE (LIKE MENDIO)
+══════════════════════════════════════════════════════ -->
+<section class="bg-blue" id="services" style="padding:80px 0;border-bottom:2.5px solid #000;">
+  <div class="w-inner">
+    <div class="svc-grid-title scroll-fade">
+      <span class="s-label s-label-yellow">DEMAND ON DOORSTEP</span>
+      <h2 class="s-heading s-heading-white">Popular Services</h2>
+      <p class="s-subheading s-subheading-light">Book trusted medical professionals in minutes</p>
+    </div>
+
+    <div class="svc-grid scroll-fade">
+      <!-- AI Scan -->
+      <div class="svc-tile" onclick="openBk('ai_scan')">
+        <div>
+          <div class="svc-tile-name">AI Symptom Scan</div>
+          <div class="svc-tile-time">⚡ Instant</div>
+        </div>
+        <div class="svc-tile-emoji">🧠</div>
+      </div>
+
+      <!-- General -->
+      <div class="svc-tile" onclick="openBk('general')">
+        <div>
+          <div class="svc-tile-name">General Medicine</div>
+          <div class="svc-tile-time">10 min</div>
+        </div>
+        <div class="svc-tile-emoji">🩺</div>
+      </div>
+
+      <!-- Cardiology -->
+      <div class="svc-tile" onclick="openBk('cardiology')">
+        <div>
+          <div class="svc-tile-name">Cardiology</div>
+          <div class="svc-tile-time">15 min</div>
+        </div>
+        <div class="svc-tile-emoji">❤️</div>
+      </div>
+
+      <!-- Dermatology - wide -->
+      <div class="svc-tile wide" onclick="openBk('dermatology')">
+        <div>
+          <div class="svc-tile-name">Dermatology <span class="svc-tile-popular">POPULAR</span></div>
+          <div class="svc-tile-time">12 min</div>
+        </div>
+        <div class="svc-tile-emoji">💧</div>
+      </div>
+
+      <!-- More -->
+      <div class="svc-tile svc-tile-more" onclick="window.location='{% url 'find_doctors' %}'">
+        <h3 class="svc-tile-name">More<br>Services</h3>
+        <div class="svc-more-arrow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </div>
+      </div>
+
+      <!-- Neurology -->
+      <div class="svc-tile" onclick="openBk('neurology')">
+        <div>
+          <div class="svc-tile-name">Neurology</div>
+          <div class="svc-tile-time">20 min</div>
+        </div>
+        <div class="svc-tile-emoji">🧬</div>
+      </div>
+
+      <!-- Pediatrics -->
+      <div class="svc-tile" onclick="openBk('pediatrics')">
+        <div>
+          <div class="svc-tile-name">Pediatrics</div>
+          <div class="svc-tile-time">18 min</div>
+        </div>
+        <div class="svc-tile-emoji">🧸</div>
+      </div>
+
+      <!-- Orthopedics -->
+      <div class="svc-tile" onclick="openBk('ortho')">
+        <div>
+          <div class="svc-tile-name">Orthopedics</div>
+          <div class="svc-tile-time">15 min</div>
+        </div>
+        <div class="svc-tile-emoji">🦴</div>
+      </div>
+
+      <!-- Gynecology -->
+      <div class="svc-tile" onclick="openBk('gynecology')">
+        <div>
+          <div class="svc-tile-name">Gynecology</div>
+          <div class="svc-tile-time">25 min</div>
+        </div>
+        <div class="svc-tile-emoji">🌸</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     THE TRUST PROCESS (5-step with arrows — MENDIO style)
+══════════════════════════════════════════════════════ -->
+<section class="bg-cream" id="trust-process" style="padding:80px 0;border-bottom:2.5px solid #000;">
+  <div class="w-inner">
+    <div class="scroll-fade">
+      <span class="s-label">SOCIETY MOAT</span>
+      <h2 class="s-heading">THE TRUST PROCESS</h2>
+      <p class="s-subheading">View our 5-step trust process.</p>
+    </div>
+
+    <div class="tp-steps scroll-fade" style="gap:0;">
+      <!-- Step 1 -->
+      <div class="tp-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <span class="tp-step-tag">STEP 01</span>
+          <div class="tp-icon">🏥</div>
+        </div>
+        <div class="tp-title">PATIENT BOOKS</div>
+        <p class="tp-desc">Choose a service, browse verified specialist doctors, and schedule instantly using our AI-powered platform.</p>
+      </div>
+      <!-- Arrow -->
+      <div class="tp-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <!-- Step 2 -->
+      <div class="tp-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <span class="tp-step-tag">STEP 02</span>
+          <div class="tp-icon" style="background:#0038FF;border-color:#0038FF;color:#fff;">🪪</div>
+        </div>
+        <div class="tp-title">DOCTOR VERIFIED</div>
+        <p class="tp-desc">Aadhaar checked, live selfie authenticated, medical license verified and background cleared before approval.</p>
+      </div>
+      <!-- Arrow -->
+      <div class="tp-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <!-- Step 3 -->
+      <div class="tp-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <span class="tp-step-tag">STEP 03</span>
+          <div class="tp-icon" style="background:#CCFF00;border-color:#000;color:#000;">🎫</div>
+        </div>
+        <div class="tp-title">GATE PASS GENERATED</div>
+        <p class="tp-desc">Automated digital OTP pass pushed straight to your registered mobile for the appointment entry.</p>
+      </div>
+      <!-- Arrow -->
+      <div class="tp-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <!-- Step 4 -->
+      <div class="tp-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <span class="tp-step-tag">STEP 04</span>
+          <div class="tp-icon" style="background:#F59E0B;border-color:#000;color:#000;">📱</div>
+        </div>
+        <div class="tp-title">OTP VERIFIED</div>
+        <p class="tp-desc">Doctor enters only after your OTP is verified — a one-time-use dynamic code that expires in 30 minutes.</p>
+      </div>
+      <!-- Arrow -->
+      <div class="tp-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <!-- Step 5 -->
+      <div class="tp-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <span class="tp-step-tag">STEP 05</span>
+          <div class="tp-icon" style="background:#10B981;border-color:#000;color:#fff;">✅</div>
+        </div>
+        <div class="tp-title">SERVICE COMPLETED</div>
+        <p class="tp-desc">Confirm diagnosis is done and release secure escrow funds directly. Rate your doctor experience.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     WHY TRUST MEDICATE + AUTO-SWIPE SMART CARD
+══════════════════════════════════════════════════════ -->
+<section class="bg-blue" id="why-trust" style="padding:80px 0;border-bottom:2.5px solid #fff;">
+  <div class="w-inner">
+    <div class="wt-split">
+      <!-- Left -->
+      <div class="wt-left scroll-fade">
+        <span class="s-label s-label-yellow">CAMPUS PROTECTION</span>
+        <h2 class="wt-heading">WHY PATIENTS<br>TRUST MEDICATE</h2>
+        <p class="wt-desc">Every provider is verified, tracked and approved before providing any medical service to you.</p>
+        <!-- Avatar stack -->
+        <div class="wt-avatars">
+          <div class="wt-avatar-img"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&h=60&fit=crop&crop=face" alt="user1"></div>
+          <div class="wt-avatar-img"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=60&h=60&fit=crop&crop=face" alt="user2"></div>
+          <div class="wt-avatar-img"><img src="https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=60&h=60&fit=crop&crop=face" alt="user3"></div>
+          <div class="wt-avatar-img"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=60&h=60&fit=crop&crop=face" alt="user4"></div>
+          <div class="wt-count">1.2K+</div>
+        </div>
+        <p class="wt-trusted">Trusted by 1200+ verified patients across India</p>
+      </div>
+
+      <!-- Right: 3-slide auto-carousel -->
+      <div class="wt-right scroll-fade">
+        <div class="wt-card-track">
+          <!-- Slide 1: Smart Gate Pass -->
+          <div class="wt-slide active" id="wt-slide-0">
+            <div class="wt-slide-badge">15 MIN AVG ARRIVAL</div>
+            <div class="wt-slide-icon">🎫</div>
+            <div class="wt-slide-title">SMART GATE PASS</div>
+            <p class="wt-slide-sub">Digital appointment pass with OTP is generated and sent securely.</p>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>OTP Generated</div>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>Doctor Verified</div>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>Patient Approved</div>
+            <div class="wt-box">
+              <div class="wt-box-label">OTP GENERATED</div>
+              <div class="wt-otp-row">
+                <div class="wt-otp-code">MED-2481</div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <div class="wt-box-meta"><span>ETA</span><span>12 mins</span></div>
+            </div>
+          </div>
+
+          <!-- Slide 2: Aadhaar + Selfie Verified -->
+          <div class="wt-slide" id="wt-slide-1">
+            <div class="wt-slide-badge">1200+ VERIFIED EXPERTS</div>
+            <div class="wt-slide-icon">🛡️</div>
+            <div class="wt-slide-title">AADHAAR + SELFIE VERIFIED</div>
+            <p class="wt-slide-sub">Every doctor goes through rigorous 3-step verification process before joining MediCate.</p>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>Government ID Verification</div>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>Live Selfie Facial Match</div>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>Background Clearance</div>
+            <div class="wt-box">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:36px;height:36px;border-radius:50%;background:#ddd;border:1.5px solid #000;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1rem;">👨‍⚕️</div>
+                  <div><div style="font-weight:900;font-size:0.85rem;">Dr. Ramesh Kumar</div><div style="font-size:0.65rem;color:#666;font-weight:600;">Cardiologist</div></div>
+                </div>
+                <span style="background:#0038FF;color:#fff;border:1.5px solid #000;border-radius:999px;padding:3px 10px;font-size:0.6rem;font-weight:900;text-transform:uppercase;">VERIFIED</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:12px;">
+                <div style="text-align:center;font-size:0.6rem;font-weight:800;"><div style="width:22px;height:22px;background:#CCFF00;border:1.5px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 3px;">✓</div>Aadhaar</div>
+                <div style="text-align:center;font-size:0.6rem;font-weight:800;"><div style="width:22px;height:22px;background:#CCFF00;border:1.5px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 3px;">✓</div>Selfie</div>
+                <div style="text-align:center;font-size:0.6rem;font-weight:800;"><div style="width:22px;height:22px;background:#CCFF00;border:1.5px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 3px;">✓</div>Background</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 3: Escrow Protected -->
+          <div class="wt-slide" id="wt-slide-2">
+            <div class="wt-slide-badge">ESCROW PROTECTED</div>
+            <div class="wt-slide-icon">🔒</div>
+            <div class="wt-slide-title">SECURE ESCROW PAYMENT</div>
+            <p class="wt-slide-sub">Your payment is held safely in escrow and only released after you confirm the consultation is complete.</p>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>Pay Securely Upfront</div>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>Funds Held in Escrow</div>
+            <div class="wt-check"><div class="wt-check-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>100% Refund if Unsatisfied</div>
+            <div class="wt-box">
+              <div style="font-size:0.6rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">PAYMENT STATUS</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-family:'Arial Black',sans-serif;font-size:1.3rem;font-weight:900;color:#0038FF;">₹599.00</div>
+                <span style="background:#10B981;color:#fff;border-radius:999px;padding:4px 10px;font-size:0.65rem;font-weight:900;text-transform:uppercase;">IN ESCROW</span>
+              </div>
+              <div style="margin-top:10px;height:6px;background:#E5E7EB;border-radius:999px;overflow:hidden;">
+                <div style="height:100%;background:#CCFF00;border-radius:999px;width:65%;transition:width 2s ease;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:0.6rem;font-weight:700;color:#9CA3AF;margin-top:4px;">
+                <span>Payment Held</span><span>Release on Confirm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide dots -->
+        <div class="wt-dots">
+          <div class="wt-dot active" onclick="goSlide(0)"></div>
+          <div class="wt-dot" onclick="goSlide(1)"></div>
+          <div class="wt-dot" onclick="goSlide(2)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     WHAT PATIENTS SAY — CAROUSEL (center-highlight style)
+══════════════════════════════════════════════════════ -->
+<section class="bg-cream" id="testimonials" style="padding:80px 0;border-bottom:2.5px solid #000;">
+  <div class="w-inner">
+    <div class="test-header scroll-fade">
+      <span class="s-label" style="display:block;">PATIENT TESTIMONIALS</span>
+      <h2 class="s-heading">WHAT PATIENTS SAY</h2>
+      <p class="s-subheading" style="margin:10px auto 0;text-align:center;">Hear from patients across India who got expert care resolved securely through MediCate.</p>
+    </div>
+
+    <div class="test-carousel scroll-fade">
+      <div class="test-track-wrapper">
+        <div class="test-track" id="testTrack">
+          <!-- Card 1 -->
+          <div class="test-card">
+            <div class="test-card-avatar"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&h=60&fit=crop&crop=face" alt="Rajesh"></div>
+            <div class="test-stars">★★★★★</div>
+            <p class="test-review">"Excellent cardiologist consultation. Got an appointment within 10 minutes. Doctor was thorough and the AI diagnosis was spot on!"</p>
+            <div class="test-author-name">RAJESH GUPTA</div>
+            <div class="test-author-role">Block A, Apt 302 · CARDIOLOGY</div>
+          </div>
+          <!-- Card 2 -->
+          <div class="test-card">
+            <div class="test-card-avatar"><img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=60&h=60&fit=crop&crop=face" alt="Neha"></div>
+            <div class="test-stars">★★★★★</div>
+            <p class="test-review">"Plumbing issue resolved in 20 minutes! The plumber arrived exactly on time and charged exactly the flat rate listed."</p>
+            <div class="test-author-name">NEHA SHARMA</div>
+            <div class="test-author-role">Villa Plot 12 · GENERAL MEDICINE</div>
+          </div>
+          <!-- Card 3 (CENTER - highlighted) -->
+          <div class="test-card center" id="testCenter">
+            <div class="test-card-avatar"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop&crop=face" alt="Pooja"></div>
+            <div class="test-stars">★★★★★</div>
+            <p class="test-review">"Escrow protection is MediCate's best feature. Payment is released only after you verify the consultation is complete!"</p>
+            <div class="test-author-name" style="color:#CCFF00;">POOJA MEHTA</div>
+            <div class="test-author-role" style="color:rgba(255,255,255,0.6);">Block A, Apt 1104 · DERMATOLOGY</div>
+          </div>
+          <!-- Card 4 -->
+          <div class="test-card">
+            <div class="test-card-avatar"><img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face" alt="Siddharth"></div>
+            <div class="test-stars">★★★★☆</div>
+            <p class="test-review">"The gate-pass verification gives me peace of mind when the doctor visits. Very secure and professional service."</p>
+            <div class="test-author-name">SIDDHARTH MALHOTRA</div>
+            <div class="test-author-role">Block C, Apt 901 · NEUROLOGY</div>
+          </div>
+          <!-- Card 5 -->
+          <div class="test-card">
+            <div class="test-card-avatar"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=60&h=60&fit=crop&crop=face" alt="Sunita"></div>
+            <div class="test-stars">★★★★★</div>
+            <p class="test-review">"Excellent pediatric care. A vetted campus professional arrived exactly within the 15-minute window. Highly recommended!"</p>
+            <div class="test-author-name">SUNITA RANI</div>
+            <div class="test-author-role">Block B, Plot 6 · PEDIATRICS</div>
+          </div>
+        </div>
+      </div>
+      <!-- Navigation -->
+      <div class="test-nav">
+        <button class="test-nav-btn" id="testPrev" onclick="slideTest(-1)">‹</button>
+        <button class="test-nav-btn" id="testNext" onclick="slideTest(1)">›</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     FAQ
+══════════════════════════════════════════════════════ -->
+<section class="bg-cream" id="faq" style="border-top:2.5px solid #000;border-bottom:2.5px solid #000;">
+  <div class="w-inner">
+    <div class="scroll-fade" style="text-align:center;">
+      <span class="s-label" style="display:block;">HAVE QUESTIONS?</span>
+      <h2 class="s-heading">FREQUENTLY ASKED QUESTIONS</h2>
+      <p class="s-subheading" style="margin:8px auto 0;text-align:center;">Everything you need to know about our medical booking workflow.</p>
+    </div>
+    <div class="faq-wrap">
+      <div class="faq-item scroll-fade">
+        <button class="faq-q" onclick="toggleFaq(this)">HOW DO I BOOK A SERVICE ON MEDICATE?<svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner">Choose from our popular services or run the AI Symptom Scan first. Select a specialist, pick your slot, and confirm. The doctor receives a notification instantly.</div></div>
+      </div>
+      <div class="faq-item scroll-fade">
+        <button class="faq-q active" onclick="toggleFaq(this)">ARE ALL DOCTORS BACKGROUND-CHECKED?<svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-a open"><div class="faq-a-inner">Yes, absolutely. Every provider goes through strict 3-step verification: Medical License check, live selfie facial match (to prevent proxy entry), and background verification. Only cleared providers appear on MediCate with a VERIFIED badge.</div></div>
+      </div>
+      <div class="faq-item scroll-fade">
+        <button class="faq-q" onclick="toggleFaq(this)">CAN I GET A VIDEO CONSULTATION?<svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner">Yes. After selecting a doctor, choose "Video Consultation" to start an HD video call. Chat consultations are also available for quick queries anytime.</div></div>
+      </div>
+      <div class="faq-item scroll-fade">
+        <button class="faq-q" onclick="toggleFaq(this)">WHAT IF I'M NOT SATISFIED?<svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner">You can request a free second opinion from another verified doctor on our platform, or raise a dispute. Our support team resolves all cases within 24 hours with full escrow refund protection.</div></div>
+      </div>
+      <div class="faq-item scroll-fade">
+        <button class="faq-q" onclick="toggleFaq(this)">HOW DOES THE AI SYMPTOM SCANNER WORK?<svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner">Our AI uses a Random Forest ML classifier trained on medical datasets. Select your symptoms from 132 options and the model predicts the top 5 most likely diseases with confidence scores, then automatically recommends the right specialist.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     CTA
+══════════════════════════════════════════════════════ -->
+{% if not request.user.is_authenticated %}
+<section class="bg-blue" id="cta" style="border-bottom:2.5px solid #000;">
+  <div class="w-inner scroll-fade">
+    <h2 class="cta-heading">READY TO SECURE<br>YOUR HEALTH?</h2>
+    <p class="cta-sub">Join thousands of patients receiving accurate AI diagnostic insights and instant specialist consultations.</p>
+    <div class="cta-btns">
+      <button class="cta-btn-primary" onclick="openModal('signupModal')">GET STARTED FREE →</button>
+      <button class="cta-btn-secondary" onclick="openModal('signinModal')">SIGN IN TO ACCOUNT</button>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ═══════════════════════════════════════════════════
+     CONTACT US
+══════════════════════════════════════════════════════ -->
+<section class="bg-blue" id="contact" style="border-top:2.5px solid #fff;">
+  <div class="w-inner">
+    <div class="ct-split">
+      <div class="ct-left scroll-fade">
+        <span class="s-label s-label-yellow">CAMPUS HELPDESK</span>
+        <h2 class="ct-heading">GET IN TOUCH</h2>
+        <p class="ct-sub">Need help with bookings, consultations, or have a dispute? Our helpdesk is online 24/7.</p>
+        <div class="ct-info-card"><div class="ct-info-icon">📞</div><div><div class="ct-info-label">Helpline</div><div class="ct-info-val">+91 1800 248 100</div></div></div>
+        <div class="ct-info-card"><div class="ct-info-icon">✉️</div><div><div class="ct-info-label">Email Support</div><div class="ct-info-val">support@medicate.in</div></div></div>
+        <div style="margin-top:20px;padding:16px 20px;background:rgba(204,255,0,0.12);border:1.5px solid #CCFF00;border-radius:14px;">
+          <div style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#CCFF00;margin-bottom:5px;">🛡️ ESCROW PROTECTION</div>
+          <div style="font-size:0.8rem;font-weight:600;color:rgba(255,255,255,0.85);line-height:1.6;">Payments held in escrow until consultation complete. Full refund if unsatisfied — no questions asked.</div>
+        </div>
+      </div>
+      <div class="ct-right scroll-fade">
+        <h3 style="font-family:'Arial Black',Impact,sans-serif;font-size:1.1rem;font-weight:900;text-transform:uppercase;margin-bottom:20px;letter-spacing:-0.01em;">SEND US A MESSAGE</h3>
+        <form class="ct-form" method="POST" action="{% url 'contact_us' %}">
+          {% csrf_token %}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div><label>YOUR FULL NAME *</label><input type="text" name="name" placeholder="e.g. Anurag Agrahari" required></div>
+            <div><label>EMAIL (OPTIONAL)</label><input type="email" name="email" placeholder="you@example.com"></div>
+          </div>
+          <label>TOPIC OF QUERY</label>
+          <div class="ct-chips" id="ctChips">
+            <div class="ct-chip sel" onclick="selChip(this,'booking')">Booking Help</div>
+            <div class="ct-chip" onclick="selChip(this,'diagnosis')">Diagnosis Query</div>
+            <div class="ct-chip" onclick="selChip(this,'refund')">Disputes & Refunds</div>
+            <div class="ct-chip" onclick="selChip(this,'other')">Other Support</div>
+          </div>
+          <input type="hidden" name="topic" id="topicHiddenCt" value="booking">
+          <label>HOW CAN WE HELP YOU? *</label>
+          <textarea name="message" placeholder="Tell us what you need help with..." required></textarea>
+          <button type="submit" class="ct-submit">SEND MESSAGE ✈</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     BOOKING MODAL
+══════════════════════════════════════════════════════ -->
+<div class="bk-overlay" id="bkModal" onclick="if(event.target===this)closeBk()">
+  <div class="bk-modal">
+    <button class="bk-close" onclick="closeBk()">✕</button>
+    <div class="bk-header">
+      <div class="bk-icon" id="bk-icon">🩺</div>
+      <div><div class="bk-name" id="bk-name">SERVICE</div><div class="bk-meta" id="bk-meta">Arrival time</div></div>
+    </div>
+    <div class="bk-price-box">
+      <div><div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;color:#9CA3AF;margin-bottom:4px;">Consultation Fee</div><div class="bk-price" id="bk-price">₹299</div></div>
+      <div class="bk-price-note">Held in escrow<br>until completion</div>
+    </div>
+    <div style="background:#F8F9FA;border:2px solid #000;border-radius:12px;padding:12px 16px;margin-bottom:18px;">
+      <div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;color:#9CA3AF;margin-bottom:8px;">WHAT'S INCLUDED</div>
+      <div style="font-size:0.8rem;font-weight:700;display:flex;flex-direction:column;gap:5px;">
+        <div>✓ Verified specialist consultation</div>
+        <div>✓ Chat + Video session</div>
+        <div>✓ Digital prescription</div>
+      </div>
+    </div>
+    <a href="#" id="bk-link" class="bk-action">🔒 BOOK &amp; FIND DOCTOR</a>
+    {% if not request.user.is_authenticated %}
+    <p style="text-align:center;font-size:0.75rem;color:#9CA3AF;margin-top:12px;font-weight:600;">
+      <a href="javascript:void(0)" onclick="closeBk();openModal('signinModal');" style="color:#0038FF;text-decoration:underline;">Sign in</a> to book this service.
+    </p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── SERVICE DATA ─────────────────────────────────── */
+const SVC = {
+  ai_scan:    {icon:'🧠',name:'AI SYMPTOM SCAN',   meta:'⚡ Instant Result',  price:'FREE', url:'{% url "check_disease" %}'},
+  general:    {icon:'🩺',name:'GENERAL MEDICINE',  meta:'⏱ 10 Mins Arrival', price:'₹299', url:'{% url "find_doctors" %}?search=General+Physician'},
+  cardiology: {icon:'❤️',name:'CARDIOLOGY',        meta:'⏱ 15 Mins Arrival', price:'₹599', url:'{% url "find_doctors" %}?search=Cardiologist'},
+  dermatology:{icon:'💧',name:'DERMATOLOGY',       meta:'⏱ 12 Mins Arrival', price:'₹399', url:'{% url "find_doctors" %}?search=Dermatologist'},
+  neurology:  {icon:'🧬',name:'NEUROLOGY',         meta:'⏱ 20 Mins Arrival', price:'₹699', url:'{% url "find_doctors" %}?search=Neurologist'},
+  pediatrics: {icon:'🧸',name:'PEDIATRICS',        meta:'⏱ 18 Mins Arrival', price:'₹349', url:'{% url "find_doctors" %}?search=Pediatrician'},
+  ortho:      {icon:'🦴',name:'ORTHOPEDICS',       meta:'⏱ 15 Mins Arrival', price:'₹499', url:'{% url "find_doctors" %}?search=Orthopedic'},
+  gynecology: {icon:'🌸',name:'GYNECOLOGY',        meta:'⏱ 25 Mins Arrival', price:'₹549', url:'{% url "find_doctors" %}?search=Gynecologist'},
+};
+function openBk(key){
+  const s=SVC[key]; if(!s) return;
+  document.getElementById('bk-icon').textContent=s.icon;
+  document.getElementById('bk-name').textContent=s.name;
+  document.getElementById('bk-meta').textContent=s.meta;
+  document.getElementById('bk-price').textContent=s.price;
+  document.getElementById('bk-link').href=s.url;
+  document.getElementById('bkModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeBk(){
+  document.getElementById('bkModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+/* ── WHY TRUST CARD AUTO-SWIPE ────────────────────── */
+let curSlide=0;
+const slides=document.querySelectorAll('.wt-slide');
+const dots=document.querySelectorAll('.wt-dot');
+function goSlide(n){
+  slides[curSlide].classList.remove('active');
+  dots[curSlide].classList.remove('active');
+  curSlide=(n+slides.length)%slides.length;
+  slides[curSlide].classList.add('active');
+  dots[curSlide].classList.add('active');
+}
+setInterval(()=>goSlide(curSlide+1), 3800);
+
+/* ── TESTIMONIALS CAROUSEL ────────────────────────── */
+let testOffset=0;
+const testTrack=document.getElementById('testTrack');
+function slideTest(dir){
+  const cards=testTrack.querySelectorAll('.test-card');
+  const cardW=cards[0].offsetWidth+20;
+  const maxOffset=-(cardW*(cards.length-3));
+  testOffset=Math.max(maxOffset, Math.min(0, testOffset-dir*cardW));
+  testTrack.style.transform=`translateX(${testOffset}px)`;
+}
+
+/* ── FAQ ACCORDION ────────────────────────────────── */
+function toggleFaq(btn){
+  const a=btn.nextElementSibling;
+  const isOpen=a.classList.contains('open');
+  document.querySelectorAll('.faq-a.open').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.faq-q.active').forEach(x=>x.classList.remove('active'));
+  if(!isOpen){a.classList.add('open');btn.classList.add('active');}
+}
+
+/* ── CONTACT CHIPS ────────────────────────────────── */
+function selChip(el,val){
+  document.querySelectorAll('.ct-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('topicHiddenCt').value=val;
+}
+
+/* ── SCROLL FADE ──────────────────────────────────── */
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.style.opacity='1';
+      e.target.style.transform='translateY(0)';
+      obs.unobserve(e.target);
+    }
+  });
+},{threshold:0.08});
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.scroll-fade').forEach(el=>{
+    el.style.opacity='0';
+    el.style.transform='translateY(28px)';
+    el.style.transition='opacity 0.7s cubic-bezier(0.16,1,0.3,1),transform 0.7s cubic-bezier(0.16,1,0.3,1)';
+    obs.observe(el);
+  });
+});
+</script>
+{% endblock %}
