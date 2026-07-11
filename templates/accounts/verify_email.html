@@ -1,428 +1,139 @@
 {% extends 'base.html' %}
-
-{% block title %}Verify Your Email — MediCate{% endblock %}
-
-{% block extra_head %}
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+{% block title %}Verify Your Email — Medicate{% endblock %}
+{% block extra_css %}
 <style>
-  *, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+.auth-page { min-height: calc(100vh - 120px); display:flex; align-items:center; justify-content:center; padding:2rem 1rem; }
+.auth-card  { width:100%; max-width:460px; overflow:hidden; padding:0; }
+.auth-header { background:var(--brand-teal-l); border-bottom:2.5px solid var(--text-primary); padding:2.5rem 2rem; text-align:center; display:flex; flex-direction:column; align-items:center; gap:0.75rem; }
+.auth-header h2 { color:var(--text-primary); font-family:var(--font-display); font-weight:800; font-size:1.75rem; margin:0; }
+.auth-header p  { color:var(--text-secondary); font-size:0.875rem; margin:0; font-weight:700; }
+.auth-body { padding:2rem; }
+.auth-footer-text { text-align:center; margin-top:1.5rem; font-size:0.875rem; color:var(--text-secondary); font-weight:700; }
+.auth-footer-text a { color:var(--brand-teal); font-weight:800; text-decoration:underline; }
 
-  body {
-    background-color: #0a0a0a;
-    font-family: 'Space Grotesk', 'Inter', monospace, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-    position: relative;
-    overflow-x: hidden;
-  }
+/* Expiry notice */
+.expiry-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff3cd;
+  border: 2px solid #ffecb5;
+  border-radius: 3px;
+  padding: 0.6rem 0.875rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+  color: #664d03;
+  font-weight: 600;
+}
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(0, 255, 136, 0.06) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 30% at 80% 80%, rgba(168, 255, 62, 0.04) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .verify-wrapper {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 480px;
-  }
-
-  /* Floating decorative elements */
-  .deco-dot {
-    position: fixed;
-    border-radius: 50%;
-    background: #00ff88;
-    opacity: 0.08;
-    animation: floatDot 8s ease-in-out infinite;
-    pointer-events: none;
-  }
-  .deco-dot:nth-child(1) { width: 180px; height: 180px; top: 10%; left: -5%; animation-delay: 0s; }
-  .deco-dot:nth-child(2) { width: 120px; height: 120px; bottom: 15%; right: -3%; animation-delay: -3s; }
-  .deco-dot:nth-child(3) { width: 60px; height: 60px; top: 60%; left: 5%; animation-delay: -5s; }
-
-  @keyframes floatDot {
-    0%, 100% { transform: translateY(0px) scale(1); }
-    50% { transform: translateY(-20px) scale(1.05); }
-  }
-
-  /* Card */
-  .verify-card {
-    background: #111111;
-    border: 3px solid #000;
-    box-shadow: 6px 6px 0 #000, 0 0 40px rgba(0, 255, 136, 0.07);
-    border-radius: 4px;
-    padding: 2.5rem 2rem;
-    animation: cardSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  @keyframes cardSlideIn {
-    from { opacity: 0; transform: translateY(24px) scale(0.97); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  /* Hero section */
-  .hero {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  .lock-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 72px;
-    height: 72px;
-    background: #0a0a0a;
-    border: 3px solid #00ff88;
-    box-shadow: 4px 4px 0 #00ff88;
-    border-radius: 4px;
-    font-size: 2rem;
-    margin-bottom: 1.25rem;
-    animation: lockPulse 3s ease-in-out infinite;
-  }
-
-  @keyframes lockPulse {
-    0%, 100% { box-shadow: 4px 4px 0 #00ff88; }
-    50% { box-shadow: 4px 4px 0 #00ff88, 0 0 20px rgba(0, 255, 136, 0.3); }
-  }
-
-  .hero-title {
-    font-size: 1.875rem;
-    font-weight: 800;
-    color: #f5f5f5;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    margin-bottom: 0.5rem;
-  }
-
-  .hero-title span {
-    color: #00ff88;
-  }
-
-  .hero-subtitle {
-    font-size: 0.9rem;
-    color: #666;
-    line-height: 1.6;
-    margin-top: 0.75rem;
-  }
-
-  .email-badge {
-    display: inline-block;
-    background: #1a1a1a;
-    border: 2px solid #333;
-    border-radius: 3px;
-    padding: 0.3rem 0.75rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #a8ff3e;
-    margin-top: 0.5rem;
-    word-break: break-all;
-    font-family: 'Space Grotesk', monospace;
-  }
-
-  /* Divider */
-  .divider {
-    border: none;
-    border-top: 2px solid #1e1e1e;
-    margin: 1.5rem 0;
-  }
-
-  /* Expiry notice */
-  .expiry-notice {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #1a1a0a;
-    border: 2px solid #3a3a00;
-    border-radius: 3px;
-    padding: 0.6rem 0.875rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.8rem;
-    color: #a8ff3e;
-  }
-
-  .expiry-icon {
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-
-  /* Alert / Error Messages */
-  .alert {
-    padding: 0.75rem 1rem;
-    border-radius: 3px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin-bottom: 1.25rem;
-    border: 2px solid;
-  }
-
-  .alert-error {
-    background: #1a0a0a;
-    border-color: #ff4444;
-    color: #ff6666;
-  }
-
-  .alert-success {
-    background: #0a1a0f;
-    border-color: #00ff88;
-    color: #00ff88;
-  }
-
-  .alert-info {
-    background: #0a0f1a;
-    border-color: #4488ff;
-    color: #66aaff;
-  }
-
-  /* Django messages */
-  .messages-list {
-    list-style: none;
-    margin-bottom: 1.25rem;
-  }
-
-  /* OTP form */
-  .form-label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #888;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-  }
-
-  .otp-input-wrapper {
-    position: relative;
-  }
-
-  .otp-input {
-    width: 100%;
-    background: #0a0a0a;
-    border: 2px solid #2a2a2a;
-    border-radius: 4px;
-    padding: 1rem 1.25rem;
-    font-size: 2rem;
-    font-weight: 700;
-    font-family: 'Space Grotesk', monospace;
-    color: #f5f5f5;
-    letter-spacing: 0.5em;
-    text-align: center;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-appearance: none;
-  }
-
-  .otp-input:focus {
-    border-color: #00ff88;
-    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.12), 3px 3px 0 #00ff88;
-  }
-
-  .otp-input::placeholder {
-    color: #333;
-    letter-spacing: 0.3em;
-  }
-
-  .otp-hint {
-    font-size: 0.75rem;
-    color: #555;
-    margin-top: 0.4rem;
-    text-align: center;
-  }
-
-/* 6-box OTP styles */
+/* OTP Form */
 .otp-boxes {
   display: flex;
   gap: 10px;
   justify-content: center;
   margin-bottom: 0.75rem;
 }
-
 .otp-box {
   width: 52px;
   height: 64px;
-  background: #0a0a0a;
-  border: 2px solid #2a2a2a;
+  background: #fff;
+  border: 2.5px solid var(--text-primary);
   border-radius: 4px;
   font-size: 1.75rem;
   font-weight: 800;
-  font-family: 'Space Grotesk', monospace;
-  color: #f5f5f5;
+  font-family: var(--font-display);
+  color: var(--text-primary);
   text-align: center;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  caret-color: #00ff88;
+  transition: all 0.2s;
+  caret-color: var(--brand-teal);
+  box-shadow: 2px 2px 0 var(--text-primary);
   -webkit-appearance: none;
 }
-
 .otp-box:focus {
-  border-color: #00ff88;
-  box-shadow: 0 0 0 3px rgba(0,255,136,0.12), 2px 2px 0 #00ff88;
+  border-color: var(--brand-teal);
+  box-shadow: 4px 4px 0 var(--brand-teal);
+  transform: translate(-2px, -2px);
 }
-
-.otp-box.filled {
-  border-color: #00ff88;
-  color: #00ff88;
-}
-
 @media (max-width: 400px) {
   .otp-box { width: 42px; height: 54px; font-size: 1.4rem; }
   .otp-boxes { gap: 7px; }
 }
-
-  /* Submit button */
-  .btn-verify {
-    display: block;
-    width: 100%;
-    padding: 0.9rem 1.5rem;
-    margin-top: 1.5rem;
-    background: #00ff88;
-    color: #000;
-    font-size: 1rem;
-    font-weight: 800;
-    font-family: 'Space Grotesk', monospace;
-    letter-spacing: 0.02em;
-    border: 3px solid #000;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0 #000;
-    cursor: pointer;
-    outline: none;
-    transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
-    text-transform: uppercase;
-  }
-
-  .btn-verify:hover {
-    background: #a8ff3e;
-    transform: translate(-1px, -1px);
-    box-shadow: 5px 5px 0 #000;
-  }
-
-  .btn-verify:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0 #000;
-  }
-
-  /* Footer links */
-  .card-footer {
-    margin-top: 1.5rem;
-    text-align: center;
-    font-size: 0.85rem;
-    color: #555;
-  }
-
-  .resend-link {
-    color: #00ff88;
-    text-decoration: none;
-    font-weight: 600;
-    border-bottom: 2px solid transparent;
-    transition: border-color 0.2s, color 0.2s;
-  }
-
-  .resend-link:hover {
-    color: #a8ff3e;
-    border-bottom-color: #a8ff3e;
-  }
-
-  /* Responsive */
-  @media (max-width: 520px) {
-    .verify-card {
-      padding: 2rem 1.25rem;
-    }
-    .hero-title {
-      font-size: 1.5rem;
-    }
-    .otp-input {
-      font-size: 1.5rem;
-      letter-spacing: 0.3em;
-    }
-  }
+.otp-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.4rem;
+  text-align: center;
+  font-weight: 600;
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Decorative floating dots -->
-<div class="deco-dot"></div>
-<div class="deco-dot"></div>
-<div class="deco-dot"></div>
-
-<div class="verify-wrapper">
-  <div class="verify-card">
-
-    <!-- Hero -->
-    <div class="hero">
-      <div class="lock-icon">🔐</div>
-      <h1 class="hero-title">Verify Your <span>Email</span></h1>
-      <p class="hero-subtitle">
-        We've sent a 6-digit verification code to
-      </p>
+<div class="auth-page">
+  <div class="auth-card card-nb">
+    
+    <div class="auth-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--text-primary);"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <h2>Verify Email</h2>
+      <p>We've sent a 6-digit verification code to</p>
       {% if email %}
-        <div class="email-badge">{{ email }}</div>
+        <div style="background:#fff; border: 2.5px solid var(--text-primary); padding: 0.2rem 0.5rem; font-weight: 700; border-radius: 4px; margin-top: 0.25rem;">
+          {{ email }}
+        </div>
       {% endif %}
     </div>
 
-    <hr class="divider">
-
-    <!-- Expiry notice -->
-    <div class="expiry-notice">
-      <span class="expiry-icon">⏱</span>
-      <span>This code expires in <strong>15 minutes</strong>. Check your spam folder if you don't see it.</span>
-    </div>
-
-    <!-- Django messages -->
-    {% if messages %}
-      <ul class="messages-list">
-        {% for message in messages %}
-          <li class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
-            {{ message }}
-          </li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-
-    <!-- Error -->
-    {% if error %}
-      <div class="alert alert-error">⚠ {{ error }}</div>
-    {% endif %}
-
-    <!-- OTP Form — 6 individual boxes -->
-    <form method="POST" action="" autocomplete="off" id="otpForm">
-      {% csrf_token %}
-      <input type="hidden" name="otp" id="otpHidden">
-
-      <label class="form-label" style="text-align:center; display:block; margin-bottom:1rem;">Enter 6-Digit Code</label>
-
-      <div class="otp-boxes" id="otpBoxes">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="0">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="1">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="2">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="3">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="4">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="5">
+    <div class="auth-body">
+      
+      <div class="expiry-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>This code expires in <strong>15 minutes</strong>. Check your spam folder if you don't see it.</span>
       </div>
-      <p class="otp-hint">Enter the 6-digit code sent to your email</p>
 
-      <button type="submit" class="btn-verify" id="verifyBtn" disabled>✓ &nbsp;Verify Email</button>
-    </form>
+      {% if messages %}
+        <div style="margin-bottom: 1.5rem;">
+          {% for message in messages %}
+            <div class="card-nb" style="padding: 1rem; background: {% if message.tags == 'error' %}#ffebee{% elif message.tags == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.875rem;">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
-    <!-- Footer -->
-    <div class="card-footer">
-      Didn't receive the code?&nbsp;
-      <a href="/accounts/resend-otp/" class="resend-link">Resend Code →</a>
+      {% if error %}
+        <div class="card-nb" style="padding: 1rem; background: #ffebee; margin-bottom: 1.5rem; font-weight: 600; font-size: 0.875rem;">
+          {{ error }}
+        </div>
+      {% endif %}
+
+      <form method="POST" action="" autocomplete="off" id="otpForm">
+        {% csrf_token %}
+        <input type="hidden" name="otp" id="otpHidden">
+
+        <label class="form-label-nb" style="text-align:center; display:block; margin-bottom:1rem;">Enter 6-Digit Code</label>
+
+        <div class="otp-boxes" id="otpBoxes">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="0">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="1">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="2">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="3">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="4">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" data-index="5">
+        </div>
+        <p class="otp-hint">Enter the 6-digit code sent to your email</p>
+
+        <button type="submit" class="btn-nb btn-nb-primary" id="verifyBtn" disabled style="width:100%;padding:0.875rem;font-size:1rem;margin-top:1.5rem;">
+          Verify Email
+        </button>
+      </form>
+
+      <div class="auth-footer-text">
+        Didn't receive the code?
+        <a href="/accounts/resend-otp/">Resend Code</a>
+      </div>
+
     </div>
-
   </div>
 </div>
 {% endblock %}
@@ -447,15 +158,9 @@
 
   boxes.forEach((box, i) => {
     box.addEventListener('input', function(e) {
-      // Only allow digits
       this.value = this.value.replace(/\D/g, '').slice(-1);
-
       if (this.value) {
-        this.classList.add('filled');
-        // Move to next box
         if (i < 5) boxes[i + 1].focus();
-      } else {
-        this.classList.remove('filled');
       }
       updateSubmitBtn();
     });
@@ -464,7 +169,6 @@
       if (e.key === 'Backspace') {
         if (!this.value && i > 0) {
           boxes[i - 1].value = '';
-          boxes[i - 1].classList.remove('filled');
           boxes[i - 1].focus();
           updateSubmitBtn();
         }
@@ -475,16 +179,14 @@
 
     box.addEventListener('paste', function(e) {
       e.preventDefault();
-      const pasted = (e.clipboardData || window.clipboardData)
-        .getData('text').replace(/\D/g, '').slice(0, 6);
+      const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
       pasted.split('').forEach((ch, idx) => {
         if (boxes[idx]) {
           boxes[idx].value = ch;
-          boxes[idx].classList.add('filled');
         }
       });
       const focusIdx = Math.min(pasted.length, 5);
-      boxes[focusIdx].focus();
+      if(boxes[focusIdx]) boxes[focusIdx].focus();
       updateSubmitBtn();
     });
 
@@ -497,8 +199,7 @@
     hidden.value = getFullOtp();
   });
 
-  // Auto-focus first box
-  boxes[0].focus();
+  if (boxes.length > 0) boxes[0].focus();
 })();
 </script>
 {% endblock %}

@@ -28,8 +28,10 @@ def signup_patient(request):
         d = form.cleaned_data
         user = User.objects.create_user(
             username=d['username'], email=d['email'], password=d['password'])
-        addr = f"{d.get('address','')}, {d.get('city','')}, {d.get('state','')}, {d.get('country','India')}"
-        lat, lon = geocode_address(addr)
+        lat, lon = d.get('latitude'), d.get('longitude')
+        if not lat or not lon:
+            addr = f"{d.get('address','')}, {d.get('city','')}, {d.get('state','')}, {d.get('country','India')}"
+            lat, lon = geocode_address(addr)
         profile = PatientProfile.objects.create(
             user=user, name=d['name'], email=d['email'],
             dob=d.get('dob'), gender=d.get('gender',''),
@@ -42,7 +44,7 @@ def signup_patient(request):
         # Send OTP
         otp = set_otp(profile)
         ok  = send_otp_email(user.email, otp, name=d['name'])
-        login(request, user)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         if ok:
             messages.success(request, f'Account created! We sent a verification code to {user.email}.')
         else:
@@ -57,8 +59,10 @@ def signup_doctor(request):
         d = form.cleaned_data
         user = User.objects.create_user(
             username=d['username'], email=d['email'], password=d['password'])
-        addr = f"{d.get('address','')}, {d.get('city','')}, {d.get('state','')}, {d.get('country','India')}"
-        lat, lon = geocode_address(addr)
+        lat, lon = d.get('latitude'), d.get('longitude')
+        if not lat or not lon:
+            addr = f"{d.get('address','')}, {d.get('city','')}, {d.get('state','')}, {d.get('country','India')}"
+            lat, lon = geocode_address(addr)
         profile = DoctorProfile.objects.create(
             user=user, name=d['name'], email=d['email'],
             specialization=d.get('specialization',''),
@@ -81,7 +85,7 @@ def signup_doctor(request):
         # Send OTP
         otp = set_otp(profile)
         ok  = send_otp_email(user.email, otp, name=d['name'])
-        login(request, user)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         if ok:
             messages.success(request, f'Account created! We sent a verification code to {user.email}.')
         else:

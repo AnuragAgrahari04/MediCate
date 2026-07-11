@@ -26,6 +26,8 @@ class PatientSignupForm(forms.Form):
     pincode    = forms.CharField(max_length=10, required=False, widget=forms.TextInput(attrs={'placeholder': 'Pincode'}))
     country    = forms.CharField(max_length=100, required=False, initial='India', widget=forms.TextInput(attrs={'placeholder': 'Country'}))
     blood_group = forms.CharField(max_length=5, required=False, widget=forms.TextInput(attrs={'placeholder': 'e.g. A+'}))
+    latitude    = forms.FloatField(required=False, widget=forms.HiddenInput())
+    longitude   = forms.FloatField(required=False, widget=forms.HiddenInput())
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').strip()
@@ -67,6 +69,8 @@ class DoctorSignupForm(forms.Form):
     video_consult_fee = forms.DecimalField(min_value=0, decimal_places=2, required=False, initial=0, widget=forms.NumberInput(attrs={'placeholder': 'Video Consult Fee (INR)'}))
     chat_consult    = forms.BooleanField(required=False, initial=True)
     bio             = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Brief bio / about yourself'}))
+    latitude        = forms.FloatField(required=False, widget=forms.HiddenInput())
+    longitude       = forms.FloatField(required=False, widget=forms.HiddenInput())
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').strip()

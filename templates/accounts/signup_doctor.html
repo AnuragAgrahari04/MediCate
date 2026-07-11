@@ -106,18 +106,25 @@
           </div>
 
           <div class="form-section-title">📍 Clinic Address (for patient matching)</div>
+          <input type="hidden" name="latitude" id="id_latitude">
+          <input type="hidden" name="longitude" id="id_longitude">
           <div class="form-group" style="margin-bottom:1rem;">
             <label class="form-label-nb">Street Address</label>
-            <input type="text" name="address" class="input-nb" placeholder="Clinic address" style="width:100%;">
+            <div style="position:relative; display:flex; align-items:center;">
+              <input type="text" name="address" class="input-nb" placeholder="Clinic address" value="{{ form.address.value|default:'' }}" style="width:100%; padding-right:110px;">
+              <button type="button" id="locateBtn" class="btn-nb" style="position:absolute; right:6px; padding: 0.4rem 0.8rem; font-size:0.75rem; background: var(--brand-yellow); border-radius:4px;">
+                📍 Locate Me
+              </button>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group" style="margin-bottom:1rem;">
-              <label class="form-label-nb">City *</label>
-              <input type="text" name="city" class="input-nb" placeholder="City" required style="width:100%;">
+              <label class="form-label-nb">State *</label>
+              <select name="state" id="stateSelect" class="input-nb" required style="width:100%;"></select>
             </div>
             <div class="form-group" style="margin-bottom:1rem;">
-              <label class="form-label-nb">State</label>
-              <input type="text" name="state" class="input-nb" placeholder="State" style="width:100%;">
+              <label class="form-label-nb">City *</label>
+              <select name="city" id="citySelect" class="input-nb" required style="width:100%;"></select>
             </div>
           </div>
           <div class="form-row">
@@ -157,6 +164,7 @@
 </div>
 {% endblock %}
 {% block extra_js %}
+<script src="/static/js/locations.js"></script>
 <script>
 document.getElementById('doctorSignup').addEventListener('submit', function(e) {
   if (document.getElementById('pw1').value !== document.getElementById('pw2').value) {
@@ -164,6 +172,64 @@ document.getElementById('doctorSignup').addEventListener('submit', function(e) {
   }
   const btn = document.getElementById('submitBtn');
   btn.innerHTML = '<span class="spinner"></span> Registering…'; btn.disabled = true;
+});
+
+// Setup City/State dropdowns
+setupLocationDropdowns('stateSelect', 'citySelect');
+
+// Locate Me Logic
+const locateBtn = document.getElementById('locateBtn');
+locateBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser");
+        return;
+    }
+    const origText = locateBtn.innerHTML;
+    locateBtn.innerHTML = 'Locating...';
+    locateBtn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        document.getElementById('id_latitude').value = lat;
+        document.getElementById('id_longitude').value = lon;
+
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+            const data = await res.json();
+            if (data && data.address) {
+                const state = data.address.state;
+                const city = data.address.city || data.address.state_district || data.address.town || data.address.village;
+                const postcode = data.address.postcode;
+                
+                if (state) document.getElementById('stateSelect').value = state;
+                // trigger change to load cities for the detected state
+                document.getElementById('stateSelect').dispatchEvent(new Event('change'));
+                
+                if (city) {
+                    // if city doesn't exist in our dropdown, just add it temporarily
+                    const citySelect = document.getElementById('citySelect');
+                    let exists = Array.from(citySelect.options).some(opt => opt.value === city);
+                    if (!exists) {
+                        citySelect.add(new Option(city, city));
+                    }
+                    citySelect.value = city;
+                }
+                
+                if (postcode) document.querySelector('input[name="pincode"]').value = postcode;
+            }
+        } catch (e) {
+            console.error("Error reversing geocode", e);
+            alert("Could not fetch address details, but coordinates were captured!");
+        } finally {
+            locateBtn.innerHTML = origText;
+            locateBtn.disabled = false;
+        }
+    }, (error) => {
+        alert("Unable to retrieve your location. Please ensure you have granted location permissions.");
+        locateBtn.innerHTML = origText;
+        locateBtn.disabled = false;
+    });
 });
 </script>
 {% endblock %}
