@@ -3,10 +3,49 @@ services:
     name: medicate
     env: python
     plan: free
-    pythonVersion: 3.12.1
-    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python -m ml.predictor"
+    pythonVersion: "3.12.1"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
     startCommand: "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p $PORT medicate.asgi:application"
     autoDeploy: true
     envVars:
+      # ── Core Django ────────────────────────────────────────────────
       - key: DEBUG
         value: "False"
+      - key: SECRET_KEY
+        sync: false          # Set in Render dashboard — never commit
+      - key: ALLOWED_HOSTS
+        sync: false          # e.g. medicate.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false          # e.g. https://medicate.onrender.com
+
+      # ── Database ───────────────────────────────────────────────────
+      - key: DATABASE_URL
+        sync: false          # Paste Supabase postgres:// URL
+
+      # ── Cloudinary (Media Storage) ─────────────────────────────────
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # ── Email (Gmail SMTP) ─────────────────────────────────────────
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+
+      # ── Video (Daily.co) ───────────────────────────────────────────
+      - key: DAILY_API_KEY
+        sync: false
+
+      # ── Video (Agora) ──────────────────────────────────────────────
+      - key: AGORA_APP_ID
+        sync: false
+      - key: AGORA_APP_CERT
+        sync: false
+
+      # ── AI (OpenRouter) ────────────────────────────────────────────
+      - key: OPENROUTER_API_KEY
+        sync: false

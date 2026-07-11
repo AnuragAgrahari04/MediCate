@@ -34,6 +34,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary',
+    'cloudinary_storage',
     'channels',
     'accounts',
     'core',
@@ -103,8 +105,17 @@ STATIC_ROOT  = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL  = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ── Cloudinary (persistent media storage in production) ───────────
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
+CLOUDINARY_API_KEY    = config('CLOUDINARY_API_KEY',    default='')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
+
+if CLOUDINARY_CLOUD_NAME:  # production: store uploads on Cloudinary
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/'
+else:                       # local dev: store uploads on disk
+    MEDIA_URL  = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -133,6 +144,7 @@ GOOGLE_MAPS_KEY    = config('GOOGLE_MAPS_KEY',    default='')
 OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default='')
 RAZORPAY_KEY_ID    = config('RAZORPAY_KEY_ID',    default='')
 RAZORPAY_KEY_SECRET= config('RAZORPAY_KEY_SECRET',default='')
+DAILY_API_KEY      = config('DAILY_API_KEY',      default='')
 
 # ── Email (Gmail SMTP) ────────────────────────────────────────────
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
