@@ -275,20 +275,44 @@ def forgot_password(request):
     """Step 1: User enters email → we send reset link."""
     form = ForgotPasswordForm(request.POST or None)
     sent = False
+    delivery_error = False
     if request.method == 'POST' and form.is_valid():
         email = form.cleaned_data['email'].strip().lower()
         user = User.objects.filter(email__iexact=email).first()
+        if not user:
+            p = PatientProfile.objects.filter(email__iexact=email).select_related('user').first()
+            d = DoctorProfile.objects.filter(email__iexact=email).select_related('user').first() if not p else None
+            user = (p or d).user if (p or d) else None
+
         if user:
             uid   = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             reset_url = request.build_absolute_uri(f'/accounts/reset-password/{uid}/{token}/')
-            send_password_reset_email(email, user.username, reset_url)
-        sent = True
-        messages.success(
-            request,
-            'If an account exists with that email, a password reset link has been sent. Please check your inbox and spam folder.'
-        )
-    return render(request, 'accounts/forgot_password.html', {'form': form, 'sent': sent, 'submitted_email': request.POST.get('email', '')})
+            ok, err = send_password_reset_email(email, user.username, reset_url)
+            if ok:
+                sent = True
+                messages.success(
+                    request,
+                    f'Reset link sent to {email}! Please check your inbox and spam folder.'
+                )
+            else:
+                delivery_error = True
+                messages.error(
+                    request,
+                    'Email delivery failed on the server (SMTP is blocked on free hosting unless an HTTPS email relay like Brevo or Google Apps Script is configured). Please use "Continue with Google" to sign in or contact support.'
+                )
+        else:
+            sent = True
+            messages.success(
+                request,
+                'If an account exists with that email, a password reset link has been sent. Please check your inbox and spam folder.'
+            )
+    return render(request, 'accounts/forgot_password.html', {
+        'form': form,
+        'sent': sent,
+        'delivery_error': delivery_error,
+        'submitted_email': request.POST.get('email', ''),
+    })
 
 
 def reset_password(request, uidb64, token):
