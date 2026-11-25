@@ -34,12 +34,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'cloudinary',
     'cloudinary_storage',
     'channels',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'accounts',
     'core',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -49,6 +56,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -74,11 +82,15 @@ WSGI_APPLICATION = 'medicate.wsgi.application'
 ASGI_APPLICATION  = 'medicate.asgi.application'
 
 # ── Database ──────────────────────────────────────────────────────
+# Production: DATABASE_URL should be the *transaction mode* pooler URL
+# (e.g. Supabase port 6543). Local dev falls back to SQLite.
 DATABASE_URL = config('DATABASE_URL', default='')
 if DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, conn_health_checks=True)
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=0)
     }
+    # Transaction-mode poolers don't support server-side cursors
+    DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 else:
     DATABASES = {
         'default': {
@@ -97,6 +109,7 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailOrUsernameModelBackend',
     'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 LANGUAGE_CODE = 'en-us'
@@ -138,9 +151,31 @@ else:
         'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
     }
 
-# ── Auth ──────────────────────────────────────────────────────────
+# ── Auth & Google OAuth (django-allauth) ─────────────────────────
 LOGIN_URL          = '/'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/accounts/oauth-redirect/'
+
+ACCOUNT_EMAIL_VERIFICATION                  = 'none'
+ACCOUNT_LOGOUT_ON_GET                       = True
+SOCIALACCOUNT_LOGIN_ON_GET                  = True
+SOCIALACCOUNT_AUTO_SIGNUP                   = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION          = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+
+GOOGLE_CLIENT_ID     = config('GOOGLE_CLIENT_ID',     default='')
+GOOGLE_CLIENT_SECRET = config('GOOGLE_CLIENT_SECRET', default='')
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'APP': {
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret':    GOOGLE_CLIENT_SECRET,
+            'key':       '',
+        },
+    }
+}
 
 # ── Third-party API keys ──────────────────────────────────────────
 AGORA_APP_ID       = config('AGORA_APP_ID',       default='')
@@ -159,6 +194,7 @@ EMAIL_USE_TLS       = config('EMAIL_USE_TLS',       default=True, cast=bool)
 EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL  = config('EMAIL_HOST_USER',     default='noreply@medicate.app')
+EMAIL_TIMEOUT       = 10
 
 # ── Session & Messages ────────────────────────────────────────────
 SESSION_COOKIE_AGE         = 86400

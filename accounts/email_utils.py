@@ -1,10 +1,31 @@
 """Email utilities for MediCate — OTP and notification emails."""
+import logging
 import random
 import string
-from django.core.mail import send_mail
-from django.conf import settings
-from django.utils import timezone
+import threading
 from datetime import timedelta
+from django.conf import settings
+from django.core.mail import send_mail
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
+
+
+def _send_async(subject, message, recipient_list, fail_silently=True):
+    """Send email in a background daemon thread so HTTP requests do not block on SMTP."""
+    def _worker():
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                recipient_list,
+                fail_silently=fail_silently,
+            )
+        except Exception as e:
+            logger.error(f'Async email failed to {recipient_list}: {e}')
+
+    threading.Thread(target=_worker, daemon=True).start()
 
 
 def generate_otp(length=6):
@@ -21,8 +42,8 @@ def set_otp(profile):
     return otp
 
 
-def send_otp_email(user_email, otp, name='User'):
-    """Send OTP verification email."""
+def send_otp_email(user_email, otp, name='User', sync=False):
+    """Send OTP verification email (non-blocking by default for instant signup)."""
     subject = '🔐 Your MediCate Verification Code'
     message = f"""
 Hi {name},
@@ -39,6 +60,9 @@ If you did not create a MediCate account, please ignore this email.
 
 — The MediCate Team
 """
+    if not sync:
+        _send_async(subject, message, [user_email], fail_silently=False)
+        return True
     try:
         send_mail(
             subject,
@@ -49,8 +73,7 @@ If you did not create a MediCate account, please ignore this email.
         )
         return True
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f'OTP email failed to {user_email}: {e}')
+        logger.error(f'OTP email failed to {user_email}: {e}')
         return False
 
 
@@ -73,10 +96,7 @@ Please log in to your dashboard to Accept or Reject this appointment.
 
 — The MediCate Team
 """
-    try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [doctor_email], fail_silently=True)
-    except Exception:
-        pass
+    _send_async(subject, message, [doctor_email], fail_silently=True)
 
 
 def send_appointment_status_email(patient_email, patient_name, doctor_name, status, slot_date, slot_time, gate_pass=None, reason=None):
@@ -113,10 +133,7 @@ Please book another slot at your convenience.
 
 — The MediCate Team
 """
-    try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [patient_email], fail_silently=True)
-    except Exception:
-        pass
+    _send_async(subject, message, [patient_email], fail_silently=True)
 
 
 def send_welcome_email(user_email, name, role='patient'):
@@ -138,7 +155,20 @@ Get started: https://medicate-moa4.onrender.com/
 
 — The MediCate Team
 """
-    try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_email], fail_silently=True)
-    except Exception:
-        pass
+    _send_async(subject, message, [user_email], fail_silently=True)
+
+
+def send_password_reset_email(user_email, username, reset_url):
+    """Send password reset link asynchronously."""
+    subject = '🔑 Reset Your MediCate Password'
+    message = f"""Hi {username},
+
+Click the link below to reset your password (valid for 24 hours):
+
+{reset_url}
+
+If you did not request a password reset, please ignore this email.
+
+— The MediCate Team
+"""
+    _send_async(subject, message, [user_email], fail_silently=False)

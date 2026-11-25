@@ -69,31 +69,81 @@ def ai_medical_response(question, disease_context=''):
     api_key = getattr(settings, 'OPENROUTER_API_KEY', '')
     if not api_key:
         return 'AI assistant is not configured. Please add OPENROUTER_API_KEY to your .env file.'
-    try:
-        system = (
-            'You are a helpful medical assistant in the Medicate app. '
-            'Provide helpful, accurate medical information but always remind patients '
-            'to consult a qualified doctor for diagnosis and treatment. '
-            f'Current patient context: {disease_context or "general inquiry"}'
-        )
-        resp = requests.post(
-            'https://openrouter.ai/api/v1/chat/completions',
-            headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
-            json={
-                'model': 'google/gemini-flash-1.5',
-                'messages': [
-                    {'role': 'system', 'content': system},
-                    {'role': 'user',   'content': question},
-                ],
-                'max_tokens': 400,
-            },
-            timeout=15,
-        )
-        resp.raise_for_status()
-        return resp.json()['choices'][0]['message']['content']
-    except Exception as e:
-        logger.error(f'AI API error: {e}')
-        return 'AI assistant temporarily unavailable. Please try again later.'
+    system = (
+        'You are a helpful medical assistant in the Medicate app. '
+        'Provide helpful, accurate medical information but always remind patients '
+        'to consult a qualified doctor for diagnosis and treatment. '
+        f'Current patient context: {disease_context or "general inquiry"}'
+    )
+    for model in ('openrouter/free', 'google/gemma-4-31b-it:free'):
+        try:
+            resp = requests.post(
+                'https://openrouter.ai/api/v1/chat/completions',
+                headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+                json={
+                    'model': model,
+                    'messages': [
+                        {'role': 'system', 'content': system},
+                        {'role': 'user',   'content': question},
+                    ],
+                    'max_tokens': 450,
+                },
+                timeout=20,
+            )
+            if resp.status_code == 200:
+                text = resp.json()['choices'][0]['message']['content'].strip()
+                if text:
+                    return text
+        except Exception as e:
+            logger.error(f'AI API error on {model}: {e}')
+    return 'AI assistant temporarily unavailable. Please try again later.'
+
+
+def ai_chatbot_response(question, history=None, patient_context=''):
+    """Multi-turn MediCate site-wide AI chatbot using free OpenRouter models."""
+    from django.conf import settings
+    import requests
+    api_key = getattr(settings, 'OPENROUTER_API_KEY', '')
+    if not api_key:
+        return 'AI chatbot is not configured. Please add OPENROUTER_API_KEY to your .env file.'
+
+    system = (
+        'You are MediCate Bot, a friendly, concise healthcare assistant on the MediCate platform. '
+        'You help users understand symptoms, explain medical terms, and navigate MediCate features:\n'
+        '- AI Symptom Scan (/check-disease/)\n'
+        '- Medical Report AI Analyzer (/reports/)\n'
+        '- Find Nearby Doctors (/find-doctors/)\n'
+        '- Consultation History (/history/)\n'
+        'Keep answers concise (3-6 sentences or short bullet points). '
+        'Always remind users that AI advice is informational and they should consult a doctor for a diagnosis.\n'
+        f'User context: {patient_context or "Guest or general health inquiry"}'
+    )
+    msgs = [{'role': 'system', 'content': system}]
+    if history:
+        for item in history[-8:]:
+            if item.get('role') in ('user', 'assistant') and item.get('content'):
+                msgs.append({'role': item['role'], 'content': item['content']})
+    msgs.append({'role': 'user', 'content': question})
+
+    for model in ('openrouter/free', 'google/gemma-4-31b-it:free'):
+        try:
+            resp = requests.post(
+                'https://openrouter.ai/api/v1/chat/completions',
+                headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+                json={
+                    'model': model,
+                    'messages': msgs,
+                    'max_tokens': 450,
+                },
+                timeout=20,
+            )
+            if resp.status_code == 200:
+                text = resp.json()['choices'][0]['message']['content'].strip()
+                if text:
+                    return text
+        except Exception as e:
+            logger.error(f'Chatbot API error on {model}: {e}')
+    return 'Sorry, I am temporarily unavailable right now. Please try again in a moment.'
 
 
 # ── Specialization → OSM healthcare tag mapping ───────────────────

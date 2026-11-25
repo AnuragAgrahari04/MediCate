@@ -39,6 +39,7 @@
             Sign In as Patient
           </button>
       </form>
+      {% include 'accounts/_google_btn.html' with role='patient' %}
       <div class="auth-footer-text">
         Don't have an account?
         <a href="{% url 'signup_patient' %}">Create one here</a>

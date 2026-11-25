@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}{{ report.title|default:"Medical Report" }} — MediCate{% endblock %}
+{% block extra_css %}
+<style>
+.report-detail { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+.rd-grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 1.75rem; align-items: start; }
+.ai-summary-box h3 { font-size: 1.05rem; font-weight: 900; margin: 1.25rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 2px solid #000; text-transform: uppercase; }
+.ai-summary-box h3:first-child { margin-top: 0; }
+.ai-summary-box p { font-size: 0.95rem; line-height: 1.65; margin-bottom: 0.65rem; color: #18181B; }
+.ai-summary-box ul { padding-left: 1.25rem; margin-bottom: 0.75rem; }
+.ai-summary-box li { font-size: 0.93rem; line-height: 1.6; margin-bottom: 0.3rem; }
+@media (max-width: 860px) { .rd-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-detail">
+  <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+      <a href="{% url 'medical_reports' %}" style="font-weight:800; font-size:0.875rem; color:#0038FF; text-decoration:none;">← Back to Reports</a>
+      <h1 style="font-size:1.65rem; font-weight:900; margin:0.35rem 0 0;">{{ report.title|default:report.get_report_type_display }}</h1>
+      <div style="font-size:0.85rem; color:#555; font-weight:700; margin-top:0.25rem;">
+        {{ report.get_report_type_display }} • Uploaded {{ report.uploaded_at|date:"M d, Y, h:i A" }}
+      </div>
+    </div>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+      {% if report.recommended_specialist %}
+        <a href="{% url 'find_doctors' %}?specialist={{ report.recommended_specialist|urlencode }}" class="btn-nb btn-nb-primary btn-nb-sm">
+          👨‍⚕️ Find {{ report.recommended_specialist }} →
+        </a>
+      {% endif %}
+      {% if is_owner %}
+        <form method="POST" action="{% url 'delete_medical_report' report.pk %}" onsubmit="return confirm('Delete this report?');">
+          {% csrf_token %}
+          <button type="submit" class="btn-nb btn-nb-secondary btn-nb-sm" style="background:#FEE2E2; color:#991B1B;">Delete</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="rd-grid">
+    <!-- Original Document Preview -->
+    <div class="card-nb" style="padding:1.25rem; background:#fff;">
+      <h2 style="font-size:1rem; font-weight:900; text-transform:uppercase; margin-bottom:1rem;">Uploaded File</h2>
+      {% if report.file_type == 'image' %}
+        <a href="{{ report.file.url }}" target="_blank" rel="noopener">
+          <img src="{{ report.file.url }}" alt="Medical Report" style="width:100%; border:2px solid #000; border-radius:12px; display:block;">
+        </a>
+        <div style="margin-top:0.75rem; text-align:center;">
+          <a href="{{ report.file.url }}" target="_blank" class="btn-nb btn-nb-secondary btn-nb-sm">Open Full Image ↗</a>
+        </div>
+      {% else %}
+        <div style="padding:2rem 1rem; text-align:center; background:#F5F5F0; border:2px solid #000; border-radius:12px;">
+          <div style="font-size:2.5rem; margin-bottom:0.5rem;">📄</div>
+          <div style="font-weight:800; margin-bottom:1rem;">PDF Medical Report</div>
+          <a href="{{ report.file.url }}" target="_blank" class="btn-nb btn-nb-primary btn-nb-sm">Open / Download PDF ↗</a>
+        </div>
+        {% if report.extracted_text %}
+        <details style="margin-top:1rem;">
+          <summary style="font-weight:800; font-size:0.85rem; cursor:pointer;">View Extracted PDF Text</summary>
+          <pre style="margin-top:0.5rem; white-space:pre-wrap; font-size:0.78rem; background:#FAFAF7; border:1.5px solid #000; padding:0.75rem; border-radius:8px; max-height:280px; overflow:auto;">{{ report.extracted_text }}</pre>
+        </details>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- AI Analysis Card -->
+    <div class="card-nb" style="padding:1.75rem; background:#fff;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+        <span style="background:#CCFF00; border:2px solid #000; border-radius:999px; padding:4px 12px; font-weight:900; font-size:0.78rem; text-transform:uppercase;">
+          🤖 AI Clinical Summary
+        </span>
+        {% if report.recommended_specialist %}
+          <span style="background:#DBEAFE; color:#0038FF; border:2px solid #000; border-radius:999px; padding:4px 12px; font-weight:800; font-size:0.78rem;">
+            Suggested: {{ report.recommended_specialist }}
+          </span>
+        {% endif %}
+      </div>
+
+      <div id="aiSummaryRendered" class="ai-summary-box"></div>
+      <textarea id="aiRawText" style="display:none;">{{ report.ai_summary|default:"No summary generated." }}</textarea>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const raw = document.getElementById('aiRawText').value;
+  const target = document.getElementById('aiSummaryRendered');
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function inlineFmt(s) {
+    return esc(s)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  }
+  const lines = raw.split(/\r?\n/);
+  let html = '';
+  let inList = false;
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) {
+      if (inList) { html += '</ul>'; inList = false; }
+      continue;
+    }
+    if (/^#{1,4}\s+/.test(t)) {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += '<h3>' + inlineFmt(t.replace(/^#{1,4}\s+/, '')) + '</h3>';
+    } else if (/^[-*•]\s+/.test(t)) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += '<li>' + inlineFmt(t.replace(/^[-*•]\s+/, '')) + '</li>';
+    } else {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += '<p>' + inlineFmt(t) + '</p>';
+    }
+  }
+  if (inList) html += '</ul>';
+  target.innerHTML = html;
+})();
+</script>
+{% endblock %}

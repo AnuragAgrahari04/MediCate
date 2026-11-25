@@ -31,9 +31,15 @@ urlpatterns = [
     path('history/',                            views.consultation_history,  name='consultation_history'),
     path('feedback/',                           views.give_feedback,         name='give_feedback'),
     path('contact/',                            views.contact_us,            name='contact_us'),
+    # ── Medical Reports AI Analyzer ───────────────────────────────
+    path('reports/',                            views.medical_reports,        name='medical_reports'),
+    path('reports/<int:pk>/',                   views.medical_report_detail,  name='medical_report_detail'),
+    path('reports/<int:pk>/delete/',            views.delete_medical_report,  name='delete_medical_report'),
     # ── API ───────────────────────────────────────────────────────
     path('api/symptoms/',                       views.api_symptoms,          name='api_symptoms'),
+    path('api/remedies/',                       views.api_remedies,          name='api_remedies'),
     path('api/ai-chat/<int:pk>/',               views.api_ai_chat,           name='api_ai_chat'),
+    path('api/chatbot/',                        views.api_chatbot,           name='api_chatbot'),
     path('api/doctors/map/',                    views.api_doctors_map,       name='api_doctors_map'),
     path('debug/doctors/',                      views.debug_doctors,         name='debug_doctors'),
 ]

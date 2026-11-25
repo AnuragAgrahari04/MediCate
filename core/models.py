@@ -171,3 +171,28 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f'[{self.topic}] {self.name} — {self.message[:40]}'
+
+
+class MedicalReport(models.Model):
+    REPORT_TYPE_CHOICES = [
+        ('xray_mri',          'X-Ray / MRI / CT Scan'),
+        ('blood_test',        'Blood / Lab Report'),
+        ('prescription',      'Prescription'),
+        ('discharge_summary', 'Discharge Summary'),
+        ('other',             'Other Medical Document'),
+    ]
+    patient                = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='reports')
+    title                  = models.CharField(max_length=200, blank=True)
+    report_type            = models.CharField(max_length=30, choices=REPORT_TYPE_CHOICES, default='other')
+    file                   = models.FileField(upload_to='medical_reports/')
+    file_type              = models.CharField(max_length=20, default='image')
+    extracted_text         = models.TextField(blank=True)
+    ai_summary             = models.TextField(blank=True)
+    recommended_specialist = models.CharField(max_length=100, blank=True)
+    uploaded_at            = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f'{self.title or self.get_report_type_display()} — {self.patient.name}'

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}AI Medical Report Analyzer — MediCate{% endblock %}
+{% block extra_css %}
+<style>
+.reports-page { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+.reports-hero { background: var(--accent, #CCFF00); border: 2.5px solid #000; border-radius: 20px; padding: 1.75rem 2rem; box-shadow: 5px 5px 0 #000; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+.reports-hero h1 { font-size: 1.75rem; font-weight: 900; text-transform: uppercase; margin: 0; }
+.reports-hero p { font-size: 0.925rem; font-weight: 600; color: #222; margin-top: 0.35rem; }
+.reports-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.75rem; align-items: start; }
+.dropzone { border: 2.5px dashed #000; border-radius: 16px; background: #FAFAF7; padding: 2rem 1.25rem; text-align: center; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+.dropzone:hover, .dropzone.dragover { background: #EEF2FF; transform: translate(-2px, -2px); }
+.report-item { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.25rem; border-bottom: 2px solid #000; transition: background 0.15s; }
+.report-item:last-child { border-bottom: none; }
+.report-item:hover { background: #F5F5F0; }
+.report-icon { width: 44px; height: 44px; border: 2px solid #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.75rem; flex-shrink: 0; background: #CCFF00; }
+.report-icon.pdf { background: #DBEAFE; color: #0038FF; }
+@media (max-width: 860px) { .reports-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-page">
+  <div class="reports-hero">
+    <div>
+      <h1>🩺 AI Medical Report Analyzer</h1>
+      <p>Upload X-Rays, MRI/CT scans, blood tests, or prescriptions — get instant plain-language AI insights.</p>
+    </div>
+    <a href="{% url 'patient_dashboard' %}" class="btn-nb btn-nb-secondary btn-nb-sm">← Dashboard</a>
+  </div>
+
+  <div class="reports-grid">
+    <!-- Upload Card -->
+    <div class="card-nb" style="padding: 1.75rem; background: #fff;">
+      <h2 style="font-size: 1.2rem; font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem;">Upload New Report</h2>
+      <form method="POST" enctype="multipart/form-data" id="reportUploadForm">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label-nb">Report Title (optional)</label>
+          <input type="text" name="title" class="input-nb" placeholder="e.g. Chest X-Ray / CBC Blood Test" style="width: 100%;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label-nb">Report Category *</label>
+          <select name="report_type" class="input-nb" style="width: 100%;" required>
+            {% for val, label in report_types %}
+              <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label-nb">Report File (PDF, JPG, PNG, WEBP — max 10MB) *</label>
+          <div class="dropzone" id="reportDropzone" onclick="document.getElementById('reportFileInput').click()">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
+            <div style="font-weight: 800; font-size: 0.95rem;" id="fileLabel">Click or drag & drop your medical report here</div>
+            <div style="font-size: 0.8rem; color: #666; margin-top: 0.3rem;">Supports X-Ray / MRI images & PDF lab reports</div>
+          </div>
+          <input type="file" name="report_file" id="reportFileInput" accept=".pdf,.jpg,.jpeg,.png,.webp" required style="display:none;">
+        </div>
+
+        <button type="submit" class="btn-nb btn-nb-primary" id="analyzeBtn" style="width: 100%; padding: 0.9rem; font-size: 1rem;">
+          🔍 Analyze Report with AI
+        </button>
+      </form>
+      <p style="font-size: 0.78rem; color: #666; font-weight: 600; margin-top: 1rem; line-height: 1.4;">
+        ⚠️ AI insights are informational only and do not replace evaluation by a licensed physician.
+      </p>
+    </div>
+
+    <!-- Previous Reports -->
+    <div class="card-nb" style="padding: 0; overflow: hidden; background: #fff;">
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 2.5px solid #000; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 1.15rem; font-weight: 900; text-transform: uppercase; margin: 0;">Your Analyzed Reports ({{ reports|length }})</h2>
+      </div>
+      {% if reports %}
+        <div>
+          {% for r in reports %}
+          <div class="report-item">
+            <div class="report-icon {% if r.file_type == 'pdf' %}pdf{% endif %}">
+              {{ r.file_type|upper }}
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 800; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ r.title|default:r.get_report_type_display }}
+              </div>
+              <div style="font-size: 0.8rem; color: #555; font-weight: 600; margin-top: 2px;">
+                {{ r.get_report_type_display }} • {{ r.uploaded_at|date:"M d, Y" }}
+                {% if r.recommended_specialist %} • <span style="color:#0038FF;font-weight:800;">{{ r.recommended_specialist }}</span>{% endif %}
+              </div>
+            </div>
+            <a href="{% url 'medical_report_detail' r.pk %}" class="btn-nb btn-nb-secondary btn-nb-sm">View</a>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="padding: 3rem 1.5rem; text-align: center; color: #666; font-weight: 700;">
+          No reports uploaded yet. Upload your first lab report, X-ray, or prescription on the left!
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const fileInput = document.getElementById('reportFileInput');
+const fileLabel = document.getElementById('fileLabel');
+const dropzone = document.getElementById('reportDropzone');
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length > 0) {
+    fileLabel.textContent = '✅ Selected: ' + fileInput.files[0].name;
+  }
+});
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if (e.dataTransfer.files.length > 0) {
+    fileInput.files = e.dataTransfer.files;
+    fileLabel.textContent = '✅ Selected: ' + e.dataTransfer.files[0].name;
+  }
+});
+
+document.getElementById('reportUploadForm').addEventListener('submit', () => {
+  const btn = document.getElementById('analyzeBtn');
+  btn.textContent = '⏳ Analyzing report with AI… (may take 10–20s)';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

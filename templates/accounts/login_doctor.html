@@ -39,6 +39,7 @@
           Sign In as Doctor
         </button>
       </form>
+      {% include 'accounts/_google_btn.html' with role='doctor' %}
       <div class="auth-footer-text">
         Not registered? <a href="{% url 'signup_doctor' %}">Register as Doctor</a>
       </div>

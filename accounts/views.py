@@ -14,7 +14,7 @@ from .forms import (
     OTPVerifyForm, ForgotPasswordForm, ResetPasswordForm,
 )
 from .models import PatientProfile, DoctorProfile
-from .email_utils import set_otp, send_otp_email, send_welcome_email
+from .email_utils import set_otp, send_otp_email, send_welcome_email, send_password_reset_email
 from core.utils import geocode_address
 
 
@@ -221,6 +221,52 @@ def logout_view(request):
     return redirect('home')
 
 
+@login_required
+def oauth_redirect(request):
+    """Post-OAuth landing: route existing users to their dashboard or create profile for new Google sign-ins."""
+    user = request.user
+    if hasattr(user, 'doctor_profile'):
+        profile = user.doctor_profile
+        if not profile.is_email_verified:
+            profile.is_email_verified = True
+            profile.save(update_fields=['is_email_verified'])
+        if profile.verification_status != 'approved':
+            return redirect('doctor_pending_approval')
+        return redirect('doctor_dashboard')
+
+    if hasattr(user, 'patient_profile'):
+        profile = user.patient_profile
+        if not profile.is_email_verified:
+            profile.is_email_verified = True
+            profile.save(update_fields=['is_email_verified'])
+        return redirect('patient_dashboard')
+
+    if user.is_staff:
+        return redirect('/admin/')
+
+    role = request.GET.get('role', 'patient')
+    full_name = user.get_full_name().strip() or user.username
+    if role == 'doctor':
+        DoctorProfile.objects.create(
+            user=user,
+            name=full_name,
+            email=user.email,
+            is_email_verified=True,
+            verification_status='pending',
+        )
+        messages.info(request, f'Welcome, Dr. {full_name}! Please complete your profile details for admin approval.')
+        return redirect('doctor_profile', username=user.username)
+
+    PatientProfile.objects.create(
+        user=user,
+        name=full_name,
+        email=user.email,
+        is_email_verified=True,
+    )
+    messages.success(request, f'Welcome to MediCate, {full_name}! You can add your mobile number & city in your profile.')
+    return redirect('patient_dashboard')
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # FORGOT / RESET PASSWORD
 # ─────────────────────────────────────────────────────────────────────────────
@@ -230,34 +276,19 @@ def forgot_password(request):
     form = ForgotPasswordForm(request.POST or None)
     sent = False
     if request.method == 'POST' and form.is_valid():
-        email = form.cleaned_data['email'].lower()
-        try:
-            user = User.objects.get(email__iexact=email)
+        email = form.cleaned_data['email'].strip().lower()
+        user = User.objects.filter(email__iexact=email).first()
+        if user:
             uid   = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             reset_url = request.build_absolute_uri(f'/accounts/reset-password/{uid}/{token}/')
-            from django.core.mail import send_mail
-            from django.conf import settings
-            send_mail(
-                '🔑 Reset Your MediCate Password',
-                f"""Hi {user.username},
-
-Click the link below to reset your password (valid for 24 hours):
-
-{reset_url}
-
-If you did not request a password reset, please ignore this email.
-
-— The MediCate Team
-""",
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=True,
-            )
-        except User.DoesNotExist:
-            pass  # Don't reveal if email exists
+            send_password_reset_email(email, user.username, reset_url)
         sent = True
-    return render(request, 'accounts/forgot_password.html', {'form': form, 'sent': sent})
+        messages.success(
+            request,
+            'If an account exists with that email, a password reset link has been sent. Please check your inbox and spam folder.'
+        )
+    return render(request, 'accounts/forgot_password.html', {'form': form, 'sent': sent, 'submitted_email': request.POST.get('email', '')})
 
 
 def reset_password(request, uidb64, token):

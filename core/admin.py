@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Consultation, ChatMessage, Rating, Feedback
+from .models import Consultation, ChatMessage, Rating, Feedback, MedicalReport
 
 @admin.register(Consultation)
 class ConsultationAdmin(admin.ModelAdmin):
@@ -18,3 +18,9 @@ class RatingAdmin(admin.ModelAdmin):
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
     list_display = ['user', 'rating', 'created_at']
+
+@admin.register(MedicalReport)
+class MedicalReportAdmin(admin.ModelAdmin):
+    list_display = ['id', 'patient', 'report_type', 'file_type', 'recommended_specialist', 'uploaded_at']
+    list_filter  = ['report_type', 'file_type']
+    search_fields = ['title', 'patient__name', 'recommended_specialist']

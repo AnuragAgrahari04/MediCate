@@ -11,7 +11,7 @@
 .dash-name { font-family: var(--font-display); font-size: 1.625rem; font-weight: 800; color: var(--text-primary); }
 .dash-sub  { color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.375rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .dash-actions-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
-.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+.action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
 .action-card { background: var(--bg-card); display: flex; flex-direction: column; gap: 0.75rem; text-decoration: none; color: var(--text-primary); }
 .ac-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; background: var(--brand-teal-l); border: 2px solid var(--text-primary); color: var(--text-primary); }
 .ac-title { font-weight: 800; font-size: 1.125rem; font-family: var(--font-display); }
@@ -97,6 +97,13 @@
       </div>
       <div class="ac-title">Find a Doctor</div>
       <p class="ac-desc">Browse nearby specialists and start a consultation</p>
+    </a>
+    <a href="{% url 'medical_reports' %}" class="action-card card-nb card-nb-hover">
+      <div class="ac-icon" style="background:#FEF08A;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div class="ac-title">AI Report Scan</div>
+      <p class="ac-desc">Upload X-Ray, MRI, or blood test reports for instant AI insights</p>
     </a>
     <a href="{% url 'consultation_history' %}" class="action-card card-nb card-nb-hover">
       <div class="ac-icon" style="background:var(--accent-purple-l);">

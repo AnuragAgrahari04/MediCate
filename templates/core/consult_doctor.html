@@ -720,8 +720,8 @@ const map = L.map('doctorMap').setView(
   (patLat && patLon) ? 12 : 5
 );
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'© OpenStreetMap', maxZoom:19
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{
+  attribution:'Tiles &copy; Esri', maxZoom:19
 }).addTo(map);
 
 if (patLat && patLon) {

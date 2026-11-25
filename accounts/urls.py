@@ -10,6 +10,7 @@ urlpatterns = [
     path('login/doctor/',   views.login_doctor,    name='login_doctor'),
     path('login/admin/',    views.login_admin,     name='login_admin'),
     path('logout/',         views.logout_view,     name='logout'),
+    path('oauth-redirect/', views.oauth_redirect,  name='oauth_redirect'),
     # ── Profiles ──────────────────────────────────────────────────
     path('profile/patient/<str:username>/', views.patient_profile, name='patient_profile'),
     path('profile/doctor/<str:username>/',  views.doctor_profile,  name='doctor_profile'),

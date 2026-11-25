@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     pythonVersion: "3.12.1"
-    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    buildCommand: "pip install -r requirements.txt && python -m ml.predictor && python manage.py collectstatic --noinput"
     startCommand: "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p $PORT medicate.asgi:application"
     autoDeploy: true
     envVars:
@@ -50,4 +50,10 @@ services:
 
       # -- AI (OpenRouter) -------------------------------------------
       - key: OPENROUTER_API_KEY
+        sync: false
+
+      # -- Google OAuth (django-allauth) -----------------------------
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
         sync: false

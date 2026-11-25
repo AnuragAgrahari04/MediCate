@@ -7,10 +7,11 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
 from accounts.models import PatientProfile, DoctorProfile
-from .models import Consultation, ChatMessage, Rating, Feedback, Appointment, AppointmentSlot
-from .utils import find_nearby_doctors, generate_video_token, ai_medical_response
+from .models import Consultation, ChatMessage, Rating, Feedback, Appointment, AppointmentSlot, MedicalReport
+from .utils import find_nearby_doctors, generate_video_token, ai_medical_response, ai_chatbot_response
 from ml.disease_data import ALL_SYMPTOMS, DISEASE_SPECIALIST
 from ml.predictor import predict_disease, get_disease_info
+from ml.remedies_data import get_disease_remedies
 
 
 
@@ -68,6 +69,8 @@ def check_disease(request):
                 top_disease, top_conf = predictions[0]
                 specialist  = DISEASE_SPECIALIST.get(top_disease, 'General Physician')
                 disease_info = get_disease_info(top_disease)
+                remedy_lang = request.POST.get('remedy_lang') or request.GET.get('remedy_lang') or 'en'
+                remedies = get_disease_remedies(top_disease, lang=remedy_lang)
                 result = {
                     'disease':       top_disease,
                     'confidence':    top_conf,
@@ -75,6 +78,7 @@ def check_disease(request):
                     'disease_info':  disease_info,
                     'predictions':   predictions,
                     'selected':      selected,
+                    'remedies':      remedies,
                 }
                 request.session['last_prediction'] = {
                     'disease':    top_disease,
@@ -810,7 +814,7 @@ def razorpay_verify(request):
         # Signature valid — mark paid
         appointment.razorpay_payment_id = payment_id
         appointment.payment_status      = 'paid'
-        appointment.status              = 'pending_approval'
+        appointment.status              = 'payment_done'
         appointment.save()
         messages.success(request,
             'Payment successful! Awaiting doctor confirmation.')
@@ -1186,4 +1190,144 @@ def no_upi_fallback(request, appointment_id):
         'appointment': appointment,
         'doctor': doctor,
     })
+
+
+# ── Medical Report Upload & AI Analysis ───────────────────────────
+
+@login_required
+def medical_reports(request):
+    """Upload medical reports (PDF / X-ray / MRI / Lab image) and view AI analysis history."""
+    if not hasattr(request.user, 'patient_profile'):
+        messages.error(request, 'Only patients can upload and analyze medical reports.')
+        return redirect('home')
+
+    patient = request.user.patient_profile
+    if request.method == 'POST':
+        uploaded = request.FILES.get('report_file')
+        title = request.POST.get('title', '').strip()
+        report_type = request.POST.get('report_type', 'other')
+
+        if not uploaded:
+            messages.error(request, 'Please select a PDF or image report to upload.')
+            return redirect('medical_reports')
+
+        from .report_utils import MAX_REPORT_BYTES, analyze_medical_report
+        if uploaded.size > MAX_REPORT_BYTES:
+            messages.error(request, 'File is too large. Maximum allowed size is 10 MB.')
+            return redirect('medical_reports')
+
+        analysis = analyze_medical_report(uploaded, uploaded.name, report_type=report_type)
+        if analysis.get('error'):
+            messages.error(request, analysis['error'])
+            return redirect('medical_reports')
+
+        report = MedicalReport.objects.create(
+            patient=patient,
+            title=title or uploaded.name,
+            report_type=report_type,
+            file=uploaded,
+            file_type=analysis['file_type'],
+            extracted_text=analysis.get('extracted_text', ''),
+            ai_summary=analysis.get('ai_summary', ''),
+            recommended_specialist=analysis.get('recommended_specialist', 'General Physician'),
+        )
+        messages.success(request, 'Report analyzed successfully!')
+        return redirect('medical_report_detail', pk=report.pk)
+
+    reports = patient.reports.all()
+    return render(request, 'core/medical_reports.html', {
+        'reports': reports,
+        'report_types': MedicalReport.REPORT_TYPE_CHOICES,
+    })
+
+
+@login_required
+def medical_report_detail(request, pk):
+    """View detailed AI analysis of a single medical report."""
+    report = get_object_or_404(MedicalReport, pk=pk)
+    is_owner = hasattr(request.user, 'patient_profile') and report.patient.user == request.user
+    is_doc = hasattr(request.user, 'doctor_profile') and (
+        Consultation.objects.filter(patient=report.patient, doctor=request.user.doctor_profile).exists()
+        or Appointment.objects.filter(patient=report.patient, slot__doctor=request.user.doctor_profile).exists()
+    )
+    if not (is_owner or is_doc):
+        messages.error(request, 'Access denied.')
+        return redirect('home')
+
+    return render(request, 'core/medical_report_detail.html', {
+        'report': report,
+        'is_owner': is_owner,
+    })
+
+
+@login_required
+@require_POST
+def delete_medical_report(request, pk):
+    """Delete an uploaded medical report."""
+    report = get_object_or_404(MedicalReport, pk=pk)
+    if not hasattr(request.user, 'patient_profile') or report.patient.user != request.user:
+        messages.error(request, 'Access denied.')
+        return redirect('home')
+    if report.file:
+        report.file.delete(save=False)
+    report.delete()
+    messages.success(request, 'Medical report deleted.')
+    return redirect('medical_reports')
+
+
+# ── Site-Wide Floating AI Chatbot API ─────────────────────────────
+
+@require_POST
+def api_chatbot(request):
+    """Site-wide floating AI chatbot with session history & patient context."""
+    try:
+        body = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    if body.get('action') == 'clear':
+        request.session['chatbot_history'] = []
+        request.session.modified = True
+        return JsonResponse({'reply': 'Conversation cleared. How can I help you today?', 'history': []})
+
+    message = (body.get('message') or '').strip()
+    if not message:
+        return JsonResponse({'error': 'Please enter a message.'}, status=400)
+
+    history = request.session.get('chatbot_history', [])
+    ctx_parts = []
+    if request.user.is_authenticated and hasattr(request.user, 'patient_profile'):
+        p = request.user.patient_profile
+        ctx_parts.append(f'Patient: {p.name}')
+        if p.city:
+            ctx_parts.append(f'City: {p.city}')
+        last_pred = request.session.get('last_prediction')
+        if last_pred:
+            ctx_parts.append(
+                f"Recent symptom scan: {last_pred.get('disease')} "
+                f"(Specialist: {last_pred.get('specialist')})"
+            )
+
+    reply = ai_chatbot_response(
+        message,
+        history=history,
+        patient_context='; '.join(ctx_parts) if ctx_parts else '',
+    )
+
+    history.append({'role': 'user', 'content': message})
+    history.append({'role': 'assistant', 'content': reply})
+    request.session['chatbot_history'] = history[-10:]
+    request.session.modified = True
+
+    return JsonResponse({'reply': reply, 'history': request.session['chatbot_history']})
+
+
+@login_required
+def api_remedies(request):
+    """Return multilingual home remedies / immediate first-aid for a disease."""
+    disease = (request.GET.get('disease') or '').strip()
+    lang = (request.GET.get('lang') or 'en').strip().lower()
+    if not disease:
+        return JsonResponse({'error': 'Disease name is required.'}, status=400)
+    return JsonResponse(get_disease_remedies(disease, lang=lang))
 

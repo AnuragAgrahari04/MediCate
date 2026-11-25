@@ -423,6 +423,251 @@
     background: rgba(245, 158, 11, 0.06);
     box-shadow: 3px 3px 0px var(--accent);
   }
+
+  /* Home Remedies Card */
+  .remedies-card-nb {
+    background: var(--card-bg);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    animation: resultReveal 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .remedies-header-nb {
+    padding: 20px 28px;
+    border-bottom: var(--border-width) solid var(--border);
+    background: var(--card-bg-alt);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: nowrap;
+  }
+
+  .remedies-header-nb.tier-emergency {
+    background: rgba(220, 38, 38, 0.1);
+    border-bottom-color: #DC2626;
+  }
+
+  .remedies-title-wrap-nb {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .remedies-title-wrap-nb h3 {
+    margin: 0 0 6px 0;
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: 1.15rem;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .remedies-title-wrap-nb p {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .tier-pill-nb {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--border);
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .tier-pill-nb.tier-home {
+    background: var(--accent);
+    color: #000000;
+  }
+
+  .tier-pill-nb.tier-supportive {
+    background: var(--primary);
+    color: #ffffff;
+  }
+
+  .tier-pill-nb.tier-emergency {
+    background: #DC2626;
+    color: #ffffff;
+    border-color: #000000;
+  }
+
+  .lang-switch-nb {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: auto;
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 4px;
+    box-shadow: 2px 2px 0px var(--shadow-color);
+  }
+
+  .lang-pill-nb {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .lang-pill-nb:hover {
+    color: var(--text-primary);
+  }
+
+  .lang-pill-nb.active {
+    background: var(--accent);
+    color: #000000;
+    box-shadow: 0 0 0 1.5px #000000;
+  }
+
+  .remedies-body-nb {
+    padding: 24px 28px;
+  }
+
+  .remedies-intro-nb {
+    margin: 0 0 18px 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--text-primary);
+  }
+
+  .remedies-intro-nb.tier-emergency {
+    color: #B91C1C;
+    font-weight: 800;
+  }
+
+  [data-theme="dark"] .remedies-intro-nb.tier-emergency {
+    color: #FCA5A5;
+  }
+
+  .remedies-grid-nb {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 640px) {
+    .remedies-grid-nb {
+      grid-template-columns: 1fr;
+    }
+    .remedies-header-nb {
+      flex-wrap: wrap;
+    }
+    .lang-switch-nb {
+      margin-left: 0;
+    }
+    .remedies-header-nb,
+    .remedies-body-nb {
+      padding: 18px;
+    }
+  }
+
+  .remedy-item-nb {
+    background: var(--card-bg-alt);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    box-shadow: 2px 2px 0px var(--shadow-color);
+  }
+
+  .remedy-emoji-nb {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .remedy-item-title-nb {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .remedy-item-detail-nb {
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--text-secondary);
+  }
+
+  .remedies-avoid-nb {
+    background: var(--card-bg-alt);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 14px;
+  }
+
+  .remedies-avoid-title-nb {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .remedies-avoid-list-nb {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .remedies-redflag-nb {
+    background: rgba(220, 38, 38, 0.08);
+    border: 2px solid #DC2626;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #991B1B;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  [data-theme="dark"] .remedies-redflag-nb {
+    background: rgba(220, 38, 38, 0.14);
+    color: #FCA5A5;
+  }
 </style>
 {% endblock %}
 
@@ -500,6 +745,64 @@
     </div>
   </div>
 
+  <!-- Home Remedies & Immediate Care (right below prediction card) -->
+  {% if result.remedies %}
+  <div class="remedies-card-nb" id="remediesCard" data-disease="{{ result.disease }}">
+    <div class="remedies-header-nb tier-{{ result.remedies.tier }}" id="remediesHeader">
+      <div class="remedies-title-wrap-nb">
+        <h3>
+          <span id="remedyCardTitle">{{ result.remedies.ui.card_title }}</span>
+          <span class="tier-pill-nb tier-{{ result.remedies.tier }}" id="remedyTierBadge">{{ result.remedies.tier_label }}</span>
+        </h3>
+        <p id="remedySubtitle">{{ result.remedies.ui.subtitle }}</p>
+      </div>
+      <div class="lang-switch-nb" role="group" aria-label="Remedies language">
+        {% for lang in result.remedies.languages %}
+        <button type="button"
+          class="lang-pill-nb {% if lang.code == result.remedies.lang %}active{% endif %}"
+          data-lang="{{ lang.code }}"
+          onclick="switchRemedyLang('{{ lang.code }}')">
+          {{ lang.label }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="remedies-body-nb">
+      <p class="remedies-intro-nb tier-{{ result.remedies.tier }}" id="remedyIntro">{{ result.remedies.intro }}</p>
+
+      <div class="remedies-grid-nb" id="remediesGrid">
+        {% for item in result.remedies.remedies %}
+        <div class="remedy-item-nb">
+          <div class="remedy-emoji-nb">{{ item.icon }}</div>
+          <div>
+            <div class="remedy-item-title-nb">{{ item.title }}</div>
+            <div class="remedy-item-detail-nb">{{ item.detail }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="remedies-avoid-nb">
+        <div class="remedies-avoid-title-nb" id="remedyAvoidTitle">{{ result.remedies.ui.avoid_title }}</div>
+        <ul class="remedies-avoid-list-nb" id="remedyAvoidList">
+          {% for av in result.remedies.avoid %}
+          <li>{{ av }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="remedies-redflag-nb">
+        <span style="font-size:1rem; line-height:1.2;">🚨</span>
+        <div>
+          <strong id="remedyRedFlagTitle">{{ result.remedies.ui.red_flag_title }}:</strong>
+          <span id="remedyRedFlagText">{{ result.remedies.seek_doctor_when }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="disclaimer-nb">
     <svg style="width: 20px; height: 20px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -525,6 +828,7 @@
 
     <form method="POST" id="symptomForm">
       {% csrf_token %}
+      <input type="hidden" name="remedy_lang" id="remedyLangInput" value="en">
       <div class="symptom-grid-nb" id="symptomGrid">
         {% for sym in symptoms %}
         <button type="button" class="sym-btn-nb {% if sym in selected %}selected{% endif %}"
@@ -630,8 +934,124 @@ if (confBar) {
 
 // Scroll to result
 {% if result %}
-document.getElementById('resultCard')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+document.getElementById('resultCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 {% endif %}
+
+// Multilingual Home Remedies switcher (persisted in localStorage, remedies section only)
+const REMEDY_LANG_KEY = 'medicate_remedy_lang';
+
+function syncRemedyLangInput(lang) {
+  const input = document.getElementById('remedyLangInput');
+  if (input) input.value = lang;
+}
+
+function renderRemediesPayload(data) {
+  if (!data || data.error) return;
+  const header = document.getElementById('remediesHeader');
+  const title = document.getElementById('remedyCardTitle');
+  const badge = document.getElementById('remedyTierBadge');
+  const subtitle = document.getElementById('remedySubtitle');
+  const intro = document.getElementById('remedyIntro');
+  const grid = document.getElementById('remediesGrid');
+  const avoidTitle = document.getElementById('remedyAvoidTitle');
+  const avoidList = document.getElementById('remedyAvoidList');
+  const redTitle = document.getElementById('remedyRedFlagTitle');
+  const redText = document.getElementById('remedyRedFlagText');
+
+  if (header) header.className = `remedies-header-nb tier-${data.tier}`;
+  if (title && data.ui) title.textContent = data.ui.card_title;
+  if (subtitle && data.ui) subtitle.textContent = data.ui.subtitle;
+  if (badge) {
+    badge.className = `tier-pill-nb tier-${data.tier}`;
+    badge.textContent = data.tier_label;
+  }
+  if (intro) {
+    intro.className = `remedies-intro-nb tier-${data.tier}`;
+    intro.textContent = data.intro;
+  }
+
+  if (grid && Array.isArray(data.remedies)) {
+    grid.innerHTML = '';
+    data.remedies.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'remedy-item-nb';
+
+      const emoji = document.createElement('div');
+      emoji.className = 'remedy-emoji-nb';
+      emoji.textContent = item.icon || '🩺';
+
+      const body = document.createElement('div');
+      const t = document.createElement('div');
+      t.className = 'remedy-item-title-nb';
+      t.textContent = item.title;
+      const d = document.createElement('div');
+      d.className = 'remedy-item-detail-nb';
+      d.textContent = item.detail;
+
+      body.appendChild(t);
+      body.appendChild(d);
+      card.appendChild(emoji);
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
+  }
+
+  if (avoidTitle && data.ui) avoidTitle.textContent = data.ui.avoid_title;
+  if (avoidList && Array.isArray(data.avoid)) {
+    avoidList.innerHTML = '';
+    data.avoid.forEach(av => {
+      const li = document.createElement('li');
+      li.textContent = av;
+      avoidList.appendChild(li);
+    });
+  }
+
+  if (redTitle && data.ui) redTitle.textContent = `${data.ui.red_flag_title}:`;
+  if (redText) redText.textContent = data.seek_doctor_when;
+}
+
+async function switchRemedyLang(lang) {
+  localStorage.setItem(REMEDY_LANG_KEY, lang);
+  syncRemedyLangInput(lang);
+
+  document.querySelectorAll('.lang-pill-nb').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+
+  const card = document.getElementById('remediesCard');
+  if (!card) return;
+  const disease = card.dataset.disease;
+  const grid = document.getElementById('remediesGrid');
+  if (grid) grid.style.opacity = '0.55';
+
+  try {
+    const url = `{% url 'api_remedies' %}?disease=${encodeURIComponent(disease)}&lang=${encodeURIComponent(lang)}`;
+    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    if (res.ok) {
+      const data = await res.json();
+      renderRemediesPayload(data);
+    }
+  } catch (err) {
+    console.error('Failed to load remedies:', err);
+  } finally {
+    if (grid) grid.style.opacity = '1';
+  }
+}
+
+(function initRemedyLang() {
+  const allowed = new Set(['en', 'hi']);
+  let savedLang = localStorage.getItem(REMEDY_LANG_KEY) || 'en';
+  if (!allowed.has(savedLang)) {
+    savedLang = 'en';
+    localStorage.setItem(REMEDY_LANG_KEY, savedLang);
+  }
+  syncRemedyLangInput(savedLang);
+  {% if result.remedies %}
+  if (savedLang !== '{{ result.remedies.lang }}') {
+    switchRemedyLang(savedLang);
+  }
+  {% endif %}
+})();
 
 // Submit button loader
 document.getElementById('symptomForm').addEventListener('submit', function(e) {
