@@ -125,11 +125,27 @@
         style="text-transform:uppercase;font-size:0.7rem;">
         {{ appt.get_status_display }}
       </span>
-      {% if appt.status == 'confirmed' and appt.appointment_type == 'video' %}
-      <div style="background:var(--blue-light);border:2px dashed var(--blue);
-        border-radius:8px;padding:4px 10px;text-align:center;">
-        <div style="font-size:0.65rem;color:var(--blue);
-          font-weight:700;text-transform:uppercase;">Video Consult</div>
+      {% if appt.appointment_type == 'video' and appt.status == 'confirmed' or appt.appointment_type == 'video' and appt.status == 'accepted' %}
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;justify-content:flex-end;">
+        {% if appt.can_join_video %}
+          <a href="{% url 'appointment_video' appt.pk %}" class="btn-nb btn-nb-primary btn-nb-sm">
+            Join Video Consultation
+          </a>
+        {% else %}
+          <button type="button" class="btn-nb btn-nb-secondary btn-nb-sm" disabled
+                  title="Available {{ appt.video_window.window_label }}"
+                  style="opacity:0.55;cursor:not-allowed;">
+            Join Video Consultation
+          </button>
+        {% endif %}
+        {% if role == 'doctor' %}
+        <form method="POST" action="{% url 'end_appointment_video' appt.pk %}"
+              onsubmit="return confirm('End consultation #{{ appt.pk }} and mark completed?');"
+              style="margin:0;">
+          {% csrf_token %}
+          <button type="submit" class="btn-nb btn-nb-danger btn-nb-sm">End Consultation</button>
+        </form>
+        {% endif %}
       </div>
       {% elif appt.status == 'confirmed' and appt.appointment_type == 'in_person' and appt.gate_pass_code %}
       <div style="background:#0d2d1e;border:2px dashed #00ff88;

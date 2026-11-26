@@ -124,6 +124,12 @@
       </div>
       <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
+        {% if form.errors %}
+          <div style="background:#fee2e2;border:2px solid #dc2626;color:#991b1b;padding:0.75rem 1rem;border-radius:6px;margin-bottom:1rem;font-weight:700;font-size:0.85rem;">
+            {{ form.non_field_errors }}
+            {% for field in form %}{% if field.errors %}{{ field.label }}: {{ field.errors|striptags }}<br>{% endif %}{% endfor %}
+          </div>
+        {% endif %}
         <div class="form-row-2">
           <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Full Name</label>{{ form.name }}</div>
           <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Email</label>{{ form.email }}</div>
@@ -150,6 +156,10 @@
         <div class="form-row-2">
           <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Available From</label>{{ form.available_from }}</div>
           <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Available To</label>{{ form.available_to }}</div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Video Hours From (Default 9:00 PM)</label>{{ form.video_available_from }}</div>
+          <div class="form-group" style="margin-bottom:1rem;"><label class="form-label-nb">Video Hours To (Default 10:00 PM)</label>{{ form.video_available_to }}</div>
         </div>
         <div class="form-group" style="display:flex;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-weight:800;color:var(--text-primary);">{{ form.chat_consult }} <span class="form-label-nb" style="margin:0;">Offer Chat Consultations</span></label>

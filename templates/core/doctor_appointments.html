@@ -204,10 +204,23 @@
             <span class="appt-badge appt-badge-green">✅ Confirmed</span>
             {% if appt.slot.doctor.fee > 0 %}<span class="appt-badge appt-badge-green">💳 Paid</span>{% endif %}
           </div>
-          {% if appt.appointment_type == 'video' and appt.video_room_url %}
-          <div class="gate-pass-box" style="margin-top:0.75rem;display:inline-block;background:var(--blue-light);border-color:var(--blue);">
-            <div class="gate-pass-label" style="color:var(--blue);">Video Room</div>
-            <a href="{{ appt.video_room_url }}" target="_blank" class="btn-nb btn-nb-primary btn-nb-sm" style="margin-top:8px;">Join Video Call</a>
+          {% if appt.appointment_type == 'video' %}
+          <div class="gate-pass-box" style="margin-top:0.75rem;display:inline-flex;gap:0.5rem;align-items:center;flex-wrap:wrap;background:var(--blue-light);border-color:var(--blue);">
+            {% if appt.can_join_video %}
+              <a href="{% url 'appointment_video' appt.pk %}" class="btn-nb btn-nb-primary btn-nb-sm">Join Video Consultation</a>
+            {% else %}
+              <button type="button" class="btn-nb btn-nb-secondary btn-nb-sm" disabled
+                      title="Available {{ appt.video_window.window_label }}"
+                      style="opacity:0.55;cursor:not-allowed;">
+                Join Video Consultation
+              </button>
+            {% endif %}
+            <form method="POST" action="{% url 'end_appointment_video' appt.pk %}"
+                  onsubmit="return confirm('End consultation #{{ appt.pk }} and mark completed?');"
+                  style="margin:0;">
+              {% csrf_token %}
+              <button type="submit" class="btn-nb btn-nb-danger btn-nb-sm">End Consultation</button>
+            </form>
           </div>
           {% elif appt.appointment_type == 'in_person' and appt.gate_pass_code %}
           <div class="gate-pass-box" style="margin-top:0.75rem;display:inline-block;">

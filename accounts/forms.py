@@ -171,14 +171,26 @@ class DoctorProfileForm(forms.ModelForm):
         fields = ['name', 'email', 'dob', 'specialization', 'qualification',
                   'experience_yrs', 'hospital_name', 'fee', 'bio',
                   'mobile_no', 'address', 'city', 'state', 'pincode', 'country',
-                  'available_from', 'available_to', 'video_consult_enabled', 'video_consult_fee', 'chat_consult', 'img']
+                  'available_from', 'available_to', 'video_consult_enabled',
+                  'video_consult_fee', 'video_available_from', 'video_available_to',
+                  'chat_consult', 'img']
         widgets = {
             'dob': forms.DateInput(attrs={'type': 'date'}),
             'available_from': forms.TimeInput(attrs={'type': 'time'}),
             'available_to':   forms.TimeInput(attrs={'type': 'time'}),
+            'video_available_from': forms.TimeInput(attrs={'type': 'time'}),
+            'video_available_to':   forms.TimeInput(attrs={'type': 'time'}),
             'bio': forms.Textarea(attrs={'rows': 4}),
             'img': forms.FileInput(),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        v_from = cleaned.get('video_available_from')
+        v_to = cleaned.get('video_available_to')
+        if v_from and v_to and v_to <= v_from:
+            raise forms.ValidationError('Video consultation end time must be after start time.')
+        return cleaned
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip().lower()

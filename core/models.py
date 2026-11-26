@@ -145,6 +145,18 @@ class Appointment(models.Model):
     created_at         = models.DateTimeField(auto_now_add=True)
     updated_at         = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['slot'],
+                condition=models.Q(
+                    appointment_type='video',
+                    status__in=['pending_payment', 'payment_done', 'confirmed'],
+                ),
+                name='unique_active_video_per_slot',
+            )
+        ]
+
     def save(self, *args, **kwargs):
         if not self.gate_pass_code:
             import random

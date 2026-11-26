@@ -114,6 +114,38 @@
     </a>
   </div>
 
+  <!-- Video Consultations -->
+  {% if video_appointments %}
+  <div class="card-nb" style="padding:0; overflow:hidden; margin-bottom:2rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:2.5px solid var(--text-primary);background:var(--bg-card);">
+      <div class="section-title">📹 Video Consultations</div>
+      <a href="{% url 'consultation_history' %}" class="btn-nb btn-nb-secondary btn-nb-sm">History</a>
+    </div>
+    <div style="background:var(--bg-card);">
+      {% for appt in video_appointments %}
+      <div class="consult-row" style="flex-wrap:wrap;">
+        <div class="cr-info">
+          <div class="cr-disease">Dr. {{ appt.slot.doctor.name }} <span class="badge-nb" style="font-size:0.7rem;">Appt #{{ appt.id }}</span></div>
+          <div class="cr-meta">{{ appt.slot.doctor.specialization }} · {{ appt.slot.date|date:"M d, Y" }} · {{ appt.slot.start_time|time:"g:i A" }} – {{ appt.slot.end_time|time:"g:i A" }} IST</div>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          {% if appt.can_join_video %}
+            <a href="{% url 'appointment_video' appt.pk %}" class="btn-nb btn-nb-primary btn-nb-sm">Join Video Consultation</a>
+          {% else %}
+            <button type="button" class="btn-nb btn-nb-secondary btn-nb-sm" disabled
+                    title="Available {{ appt.video_window.window_label }}"
+                    style="opacity:0.55;cursor:not-allowed;">
+              Join Video Consultation
+            </button>
+          {% endif %}
+          <a href="{% url 'appointment_detail' appt.pk %}" class="btn-nb btn-nb-secondary btn-nb-sm">Details</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Recent Consultations -->
   {% if recent %}
   <div class="card-nb" style="padding:0; overflow:hidden;">

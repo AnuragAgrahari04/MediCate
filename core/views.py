@@ -1,14 +1,21 @@
+from datetime import date, datetime, time as dt_time, timedelta
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.db import IntegrityError, transaction
+from django.http import JsonResponse, HttpResponseForbidden
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
 from accounts.models import PatientProfile, DoctorProfile
 from .models import Consultation, ChatMessage, Rating, Feedback, Appointment, AppointmentSlot, MedicalReport
 from .utils import find_nearby_doctors, generate_video_token, ai_medical_response, ai_chatbot_response
+from .video_utils import (
+    get_appointment_window,
+    ensure_video_room,
+)
 from ml.disease_data import ALL_SYMPTOMS, DISEASE_SPECIALIST
 from ml.predictor import predict_disease, get_disease_info
 from ml.remedies_data import get_disease_remedies
@@ -23,6 +30,20 @@ def home(request):
     return render(request, 'core/home.html', {'top_doctors': top_doctors})
 
 
+def _attach_video_state(appointments):
+    """Attach IST time-window metadata and join eligibility to Appointment instances."""
+    items = list(appointments)
+    for appt in items:
+        win = get_appointment_window(appt)
+        appt.video_window = win
+        appt.can_join_video = (
+            appt.appointment_type == 'video'
+            and appt.status in ('confirmed', 'accepted')
+            and win['is_open']
+        )
+    return items
+
+
 @login_required
 def patient_dashboard(request):
     try:
@@ -31,7 +52,18 @@ def patient_dashboard(request):
         messages.error(request, 'Patient profile not found. Please sign up correctly.')
         return redirect('home')
     recent = profile.consultations.select_related('doctor').order_by('-created_at')[:5]
-    return render(request, 'core/patient_dashboard.html', {'profile': profile, 'recent': recent})
+    video_appointments = _attach_video_state(
+        Appointment.objects.filter(
+            patient=profile,
+            appointment_type='video',
+            status__in=['confirmed', 'accepted'],
+        ).select_related('slot', 'slot__doctor').order_by('slot__date', 'slot__start_time', 'id')
+    )
+    return render(request, 'core/patient_dashboard.html', {
+        'profile': profile,
+        'recent': recent,
+        'video_appointments': video_appointments,
+    })
 
 
 @login_required
@@ -43,8 +75,18 @@ def doctor_dashboard(request):
         return redirect('home')
     recent = profile.consultations.select_related('patient').order_by('-created_at')[:5]
     pending = profile.consultations.filter(status='active').count()
+    video_appointments = _attach_video_state(
+        Appointment.objects.filter(
+            slot__doctor=profile,
+            appointment_type='video',
+            status__in=['confirmed', 'accepted'],
+        ).select_related('slot', 'patient').order_by('slot__date', 'slot__start_time', 'queue_position', 'id')
+    )
     return render(request, 'core/doctor_dashboard.html', {
-        'profile': profile, 'recent': recent, 'pending': pending
+        'profile': profile,
+        'recent': recent,
+        'pending': pending,
+        'video_appointments': video_appointments,
     })
 
 
@@ -235,7 +277,6 @@ def book_slot(request, doctor_id):
         date_str = request.POST.get('date')
         time_str = request.POST.get('time')
 
-        from datetime import datetime
         try:
             dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
         except Exception:
@@ -245,7 +286,7 @@ def book_slot(request, doctor_id):
         # Get or create slot
         slot, _ = AppointmentSlot.objects.get_or_create(
             doctor=doctor, date=dt.date(), start_time=dt.time(),
-            defaults={'end_time': dt.time(), 'is_booked': False}
+            defaults={'end_time': (dt + timedelta(minutes=30)).time(), 'is_booked': False}
         )
 
         if slot.is_booked:
@@ -292,15 +333,8 @@ def book_slot(request, doctor_id):
         appointment.payment_status = 'paid'
         queue_pos = Appointment.objects.filter(slot=slot, status='confirmed').count() + 1
         appointment.queue_position = queue_pos
-        
-        if appointment.appointment_type == 'video':
-            from core.video_utils import create_daily_room
-            room_name = f"appt-{appointment.id}-{slot.date}-{slot.start_time.strftime('%H%M')}"
-            url, name = create_daily_room(room_name)
-            appointment.video_room_url = url
-            appointment.video_room_name = name
 
-        appointment.save(update_fields=['status', 'payment_status', 'queue_position', 'video_room_url', 'video_room_name'])
+        appointment.save(update_fields=['status', 'payment_status', 'queue_position'])
         messages.success(request, f'Appointment booked! Dr. {doctor.name} is confirmed.')
 
         # Re-evaluate slot capacity (max 6)
@@ -315,7 +349,6 @@ def book_slot(request, doctor_id):
         return redirect('booking_success', pk=appointment.pk)
 
     # Generate slots for next 7 days using doctor's actual availability
-    from datetime import date, timedelta, time as dt_time, datetime
     import json
 
     today = date.today()
@@ -403,7 +436,7 @@ def book_slot(request, doctor_id):
 
 @login_required
 def book_video_slot(request, doctor_id):
-    """Slot Booking with Razorpay payment."""
+    """Night video consultation booking: 10-minute 1-on-1 slots with atomic locking."""
     if not hasattr(request.user, 'patient_profile'):
         messages.error(request, 'Only patients can book slots.')
         return redirect('find_doctors')
@@ -416,117 +449,93 @@ def book_video_slot(request, doctor_id):
         date_str = request.POST.get('date')
         time_str = request.POST.get('time')
 
-        from datetime import datetime
         try:
             dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
         except Exception:
             messages.error(request, 'Invalid date or time selected.')
-            return redirect('book_slot', doctor_id=doctor_id)
+            return redirect('book_video_slot', doctor_id=doctor_id)
 
-        # Get or create slot
-        slot, _ = AppointmentSlot.objects.get_or_create(
-            doctor=doctor, date=dt.date(), start_time=dt.time(),
-            defaults={'end_time': dt.time(), 'is_booked': False}
-        )
+        try:
+            with transaction.atomic():
+                # Lock doctor row to serialize concurrent slot creation
+                DoctorProfile.objects.select_for_update().get(pk=doctor.pk)
+                slot_end_time = (dt + timedelta(minutes=10)).time()
+                slot, _ = AppointmentSlot.objects.select_for_update().get_or_create(
+                    doctor=doctor,
+                    date=dt.date(),
+                    start_time=dt.time(),
+                    defaults={'end_time': slot_end_time, 'is_booked': False},
+                )
+                if slot.end_time == slot.start_time:
+                    slot.end_time = slot_end_time
+                    slot.save(update_fields=['end_time'])
 
-        if slot.is_booked:
-            messages.error(request, 'This slot is fully booked. Please choose another time.')
-            return redirect('book_slot', doctor_id=doctor_id)
+                already_taken = Appointment.objects.select_for_update().filter(
+                    slot=slot,
+                    appointment_type='video',
+                    status__in=['pending_payment', 'payment_done', 'confirmed', 'accepted'],
+                ).exists()
+                if slot.is_booked or already_taken:
+                    messages.error(request, 'This video slot is already booked. Please choose another time.')
+                    return redirect('book_video_slot', doctor_id=doctor_id)
 
-        appt_type = request.POST.get('appointment_type', 'in_person')
+                fee = doctor.video_consult_fee or 0
+                appointment = Appointment.objects.create(
+                    patient=request.user.patient_profile,
+                    slot=slot,
+                    status='pending_payment',
+                    appointment_type='video',
+                    fee=fee,
+                )
+                slot.is_booked = True
+                slot.save(update_fields=['is_booked'])
 
-        # Check if a cancelled/rejected appointment already exists
-        # for this slot — if so, reuse it instead of creating new
-        existing_appt = Appointment.objects.filter(slot=slot).first()
-        if existing_appt:
-            # Reset it for this patient
-            existing_appt.patient        = request.user.patient_profile
-            existing_appt.status         = 'pending_payment'
-            existing_appt.payment_status = 'pending'
-            existing_appt.rejection_reason = ''
-            existing_appt.doctor_notes    = ''
-            existing_appt.razorpay_order_id   = ''
-            existing_appt.razorpay_payment_id = ''
-            existing_appt.appointment_type = appt_type
-            # Generate a new gate pass
-            import random
-            existing_appt.gate_pass_code = f"MND-{str(random.randint(1000,9999)).zfill(4)}"
-            existing_appt.save()
-            appointment = existing_appt
-        else:
-            appointment = Appointment.objects.create(
-                patient=request.user.patient_profile,
-                slot=slot,
-                status='pending_payment',
-                appointment_type=appt_type
-            )
+                if fee > 0:
+                    return redirect('upi_payment', appointment_id=appointment.id)
 
-        fee = doctor.video_consult_fee if appt_type == 'video' else (doctor.fee or 0)
-        appointment.fee = fee
-        appointment.save(update_fields=['fee'])
+                appointment.status = 'confirmed'
+                appointment.payment_status = 'paid'
+                appointment.queue_position = 1
+                appointment.save(update_fields=['status', 'payment_status', 'queue_position'])
+        except IntegrityError:
+            messages.error(request, 'This video slot was just booked by another patient. Please pick another time.')
+            return redirect('book_video_slot', doctor_id=doctor_id)
 
-        if fee > 0:
-            return redirect('upi_payment', appointment_id=appointment.id)
-
-        # Free appointment (fee = 0): go directly to confirmed
-        appointment.status = 'confirmed'
-        appointment.payment_status = 'paid'
-        queue_pos = Appointment.objects.filter(slot=slot, status='confirmed').count() + 1
-        appointment.queue_position = queue_pos
-        
-        if appointment.appointment_type == 'video':
-            from core.video_utils import create_daily_room
-            room_name = f"appt-{appointment.id}-{slot.date}-{slot.start_time.strftime('%H%M')}"
-            url, name = create_daily_room(room_name)
-            appointment.video_room_url = url
-            appointment.video_room_name = name
-
-        appointment.save(update_fields=['status', 'payment_status', 'queue_position', 'video_room_url', 'video_room_name'])
-        messages.success(request, f'Appointment booked! Dr. {doctor.name} is confirmed.')
-
-        # Re-evaluate slot capacity (max 6)
-        active_count = Appointment.objects.filter(
-            slot=slot,
-            status__in=['pending_payment', 'payment_done', 'confirmed']
-        ).count()
-        if active_count >= 6:
-            slot.is_booked = True
-            slot.save(update_fields=['is_booked'])
-
+        messages.success(request, f'Video consultation booked! Dr. {doctor.name} is confirmed.')
         return redirect('booking_success', pk=appointment.pk)
 
-    # Generate slots for next 7 days using doctor's actual availability
-    from datetime import date, timedelta, time as dt_time, datetime
-    import json
-
+    # Generate 10-minute video slots for the next 7 nights (default 9:00 PM – 10:00 PM IST)
     today = date.today()
     days = [today + timedelta(days=i) for i in range(7)]
 
-    # Determine slot range from doctor's profile
-    slot_start = doctor.available_from if doctor.available_from else dt_time(10, 0)
-    slot_end   = doctor.available_to   if doctor.available_to   else dt_time(20, 0)
+    slot_start = doctor.video_available_from if doctor.video_available_from else dt_time(21, 0)
+    slot_end   = doctor.video_available_to   if doctor.video_available_to   else dt_time(22, 0)
 
-    # Build list of all 30-min slot times between start and end
-    def generate_time_slots(start, end):
+    def generate_video_slots(start, end):
         slots = []
         current = datetime.combine(date.today(), start)
         end_dt  = datetime.combine(date.today(), end)
-        while current < end_dt:
+        while current + timedelta(minutes=10) <= end_dt:
             slots.append(current.time())
-            current += timedelta(minutes=30)
+            current += timedelta(minutes=10)
         return slots
 
-    all_slot_times = generate_time_slots(slot_start, slot_end)
+    all_slot_times = generate_video_slots(slot_start, slot_end)
 
     from django.db.models import Count, Q
     slot_counts = AppointmentSlot.objects.filter(
         doctor=doctor, date__in=days
     ).annotate(
-        active_count=Count('appointments', filter=Q(appointments__status__in=['pending_payment', 'payment_done', 'confirmed']))
-    ).values_list('date', 'start_time', 'active_count')
+        active_count=Count(
+            'appointments',
+            filter=Q(
+                appointments__appointment_type='video',
+                appointments__status__in=['pending_payment', 'payment_done', 'confirmed', 'accepted'],
+            ),
+        ),
+    ).values_list('date', 'start_time', 'is_booked', 'active_count')
 
-    booked_counts = {(d, t): cnt for d, t, cnt in slot_counts}
-
+    booked_map = {(d, t): (is_b or cnt >= 1) for d, t, is_b, cnt in slot_counts}
     now = datetime.now()
 
     day_slots = []
@@ -536,22 +545,19 @@ def book_video_slot(request, doctor_id):
         evening   = []
 
         for t in all_slot_times:
-            # Hide past slots for today
             if d == today:
                 slot_dt = datetime.combine(d, t)
                 if slot_dt <= now:
                     continue
 
-            active_cnt = booked_counts.get((d, t), 0)
-            is_booked = active_cnt >= 6
-            spots_left = 6 - active_cnt
+            is_booked = booked_map.get((d, t), False)
+            spots_left = 0 if is_booked else 1
 
-            # Windows-safe: strip leading zero manually
             raw = datetime.combine(date.today(), t).strftime('%I:%M %p')
-            label = raw.lstrip('0')  # "09:00 AM" -> "9:00 AM"
+            label = raw.lstrip('0')
             slot_data = {
-                'time_str': t.strftime('%H:%M'),   # for form submission (24h)
-                'label':    label,                  # for display (12h AM/PM)
+                'time_str': t.strftime('%H:%M'),
+                'label':    label,
                 'booked':   is_booked,
                 'spots':    spots_left,
             }
@@ -567,7 +573,7 @@ def book_video_slot(request, doctor_id):
             'date':      d,
             'date_str':  d.strftime('%Y-%m-%d'),
             'day_name':  d.strftime('%a').upper(),
-            'day_num':   str(d.day),  # Windows-safe, no leading zero
+            'day_num':   str(d.day),
             'month':     d.strftime('%b'),
             'is_today':  d == today,
             'morning':   morning,
@@ -575,10 +581,16 @@ def book_video_slot(request, doctor_id):
             'evening':   evening,
         })
 
+    video_hours_label = (
+        f"{datetime.combine(today, slot_start).strftime('%I:%M %p').lstrip('0')} – "
+        f"{datetime.combine(today, slot_end).strftime('%I:%M %p IST').lstrip('0')}"
+    )
+
     return render(request, 'core/book_video_slot.html', {
-        'doctor':      doctor,
-        'day_slots':   day_slots,
-        'razorpay_key': razorpay_key,
+        'doctor':            doctor,
+        'day_slots':         day_slots,
+        'razorpay_key':      razorpay_key,
+        'video_hours_label': video_hours_label,
     })
 
 
@@ -605,14 +617,7 @@ def payment_callback(request):
         queue_pos = Appointment.objects.filter(slot=appointment.slot, status='confirmed').count() + 1
         appointment.queue_position = queue_pos
 
-        if appointment.appointment_type == 'video':
-            from core.video_utils import create_daily_room
-            room_name = f"appt-{appointment.id}-{appointment.slot.date}-{appointment.slot.start_time.strftime('%H%M')}"
-            url, name = create_daily_room(room_name)
-            appointment.video_room_url = url
-            appointment.video_room_name = name
-
-        appointment.save(update_fields=['razorpay_payment_id', 'payment_status', 'status', 'queue_position', 'video_room_url', 'video_room_name'])
+        appointment.save(update_fields=['razorpay_payment_id', 'payment_status', 'status', 'queue_position'])
 
         # Notify doctor by email
         doctor  = appointment.slot.doctor
@@ -652,6 +657,7 @@ def appointment_detail(request, pk):
     if not (is_patient or is_doctor):
         messages.error(request, 'Access denied.')
         return redirect('home')
+    _attach_video_state([appointment])
     return render(request, 'core/appointment_detail.html', {
         'appointment': appointment, 'is_patient': is_patient, 'is_doctor': is_doctor,
     })
@@ -707,12 +713,13 @@ def cancel_appointment(request, pk):
 
     # CRITICAL: Free the slot so it can be rebooked
     slot = appointment.slot
-    
+    max_cap = 1 if appointment.appointment_type == 'video' else 6
+
     active_count = Appointment.objects.filter(
         slot=slot,
         status__in=['pending_payment', 'payment_done', 'confirmed']
     ).count()
-    if active_count < 6:
+    if active_count < max_cap:
         slot.is_booked = False
         slot.save(update_fields=['is_booked'])
 
@@ -727,7 +734,9 @@ def doctor_appointments(request):
         return redirect('home')
 
     doctor = request.user.doctor_profile
-    confirmed = Appointment.objects.filter(slot__doctor=doctor, status='confirmed').order_by('slot__date', 'slot__start_time')
+    confirmed = _attach_video_state(
+        Appointment.objects.filter(slot__doctor=doctor, status__in=['confirmed', 'accepted']).select_related('slot', 'patient').order_by('slot__date', 'slot__start_time', 'queue_position', 'id')
+    )
     completed = Appointment.objects.filter(slot__doctor=doctor, status='completed').order_by('-slot__date')
     rejected  = Appointment.objects.filter(slot__doctor=doctor, status='rejected').order_by('-slot__date')
     refunds   = Appointment.objects.filter(slot__doctor=doctor, payment_status='refund_pending').order_by('-slot__date')
@@ -761,11 +770,12 @@ def appointment_action(request, pk):
         appointment.save(update_fields=['status', 'rejection_reason', 'payment_status', 'refund_eligible', 'refund_amount'])
         
         # Free slot capacity
+        max_cap = 1 if appointment.appointment_type == 'video' else 6
         active_count = Appointment.objects.filter(
             slot=appointment.slot,
             status__in=['pending_payment', 'payment_done', 'confirmed']
         ).count()
-        if active_count < 6:
+        if active_count < max_cap:
             appointment.slot.is_booked = False
             appointment.slot.save(update_fields=['is_booked'])
 
@@ -912,15 +922,19 @@ def consultation_history(request):
     user = request.user
     if hasattr(user, 'patient_profile'):
         consultations = user.patient_profile.consultations.select_related('doctor').order_by('-created_at')
-        appointments  = Appointment.objects.filter(
-            patient=user.patient_profile
-        ).select_related('slot__doctor').order_by('-created_at')
+        appointments  = _attach_video_state(
+            Appointment.objects.filter(
+                patient=user.patient_profile
+            ).select_related('slot', 'slot__doctor').order_by('-created_at')
+        )
         role = 'patient'
     elif hasattr(user, 'doctor_profile'):
         consultations = user.doctor_profile.consultations.select_related('patient').order_by('-created_at')
-        appointments  = Appointment.objects.filter(
-            slot__doctor=user.doctor_profile
-        ).select_related('patient').order_by('-created_at')
+        appointments  = _attach_video_state(
+            Appointment.objects.filter(
+                slot__doctor=user.doctor_profile
+            ).select_related('slot', 'patient').order_by('-created_at')
+        )
         role = 'doctor'
     else:
         return redirect('home')
@@ -1149,14 +1163,7 @@ def mark_upi_paid(request, appointment_id):
     queue_pos = Appointment.objects.filter(slot=appointment.slot, status='confirmed').count() + 1
     appointment.queue_position = queue_pos
 
-    if appointment.appointment_type == 'video':
-        from core.video_utils import create_daily_room
-        room_name = f"appt-{appointment.id}-{appointment.slot.date}-{appointment.slot.start_time.strftime('%H%M')}"
-        url, name = create_daily_room(room_name)
-        appointment.video_room_url = url
-        appointment.video_room_name = name
-
-    appointment.save(update_fields=['status', 'payment_status', 'queue_position', 'video_room_url', 'video_room_name'])
+    appointment.save(update_fields=['status', 'payment_status', 'queue_position'])
 
     # Notify doctor by email
     doctor = appointment.slot.doctor
@@ -1330,4 +1337,99 @@ def api_remedies(request):
     if not disease:
         return JsonResponse({'error': 'Disease name is required.'}, status=400)
     return JsonResponse(get_disease_remedies(disease, lang=lang))
+
+
+# ── Built-in WebRTC Video Consultation ────────────────────────────
+
+@login_required
+def appointment_video(request, pk):
+    """
+    Launch a private built-in WebRTC video consultation inside MediCate.
+    Only the appointment's patient or doctor may access when status is confirmed/accepted
+    and current IST time is within [slot_start - 10m, slot_end + 60m].
+    """
+    appointment = get_object_or_404(
+        Appointment.objects.select_related('patient__user', 'slot', 'slot__doctor__user'),
+        pk=pk,
+    )
+    is_patient = appointment.patient.user_id == request.user.id
+    is_doctor  = appointment.slot.doctor.user_id == request.user.id
+    if not (is_patient or is_doctor):
+        return HttpResponseForbidden('You are not authorized to join this video consultation.')
+
+    back_url = reverse('doctor_dashboard' if is_doctor else 'patient_dashboard')
+
+    if appointment.appointment_type != 'video':
+        messages.error(request, 'This appointment is an in-person visit, not a video consultation.')
+        return redirect('appointment_detail', pk=appointment.pk)
+
+    if appointment.status not in ('confirmed', 'accepted'):
+        messages.error(request, 'Video consultation is available only for confirmed/accepted appointments.')
+        return redirect('appointment_detail', pk=appointment.pk)
+
+    win = get_appointment_window(appointment)
+    if not win['is_open']:
+        if win['is_before']:
+            messages.warning(
+                request,
+                f"Video join window opens at {win['window_open'].strftime('%d %b %Y, %I:%M %p IST')} "
+                f"(5 minutes before your slot) and closes at {win['window_close'].strftime('%I:%M %p IST')}."
+            )
+        else:
+            messages.warning(
+                request,
+                f"Video join window closed at {win['window_close'].strftime('%d %b %Y, %I:%M %p IST')} "
+                f"(5 minutes after slot start)."
+            )
+        return redirect('appointment_detail', pk=appointment.pk)
+
+    room_name = ensure_video_room(appointment)
+    user_name = f"Dr. {appointment.slot.doctor.name}" if is_doctor else appointment.patient.name
+    peer_name = appointment.patient.name if is_doctor else f"Dr. {appointment.slot.doctor.name}"
+
+    return render(request, 'core/video_call.html', {
+        'appointment': appointment,
+        'room_name': room_name,
+        'user_name': user_name,
+        'peer_name': peer_name,
+        'is_doctor': is_doctor,
+        'is_patient': is_patient,
+        'window_info': win,
+        'slot_seconds_remaining': win['slot_seconds_remaining'],
+        'cutoff_seconds_remaining': win['cutoff_seconds_remaining'],
+        'leave_url': back_url,
+    })
+
+
+@login_required
+@require_POST
+def end_appointment_video(request, pk):
+    """Doctor ends the video consultation, marks appointment completed, and notifies connected peer."""
+    appointment = get_object_or_404(
+        Appointment.objects.select_related('slot__doctor__user'),
+        pk=pk,
+    )
+    if appointment.slot.doctor.user_id != request.user.id:
+        return HttpResponseForbidden('Only the assigned doctor can end this video consultation.')
+
+    appointment.status = 'completed'
+    appointment.save(update_fields=['status', 'updated_at'])
+
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                f'video_{appointment.id}',
+                {
+                    'type': 'call_ended',
+                    'message': 'The doctor has ended this video consultation.',
+                },
+            )
+    except Exception:
+        pass
+
+    messages.success(request, f'Consultation #{appointment.id} ended and marked as completed.')
+    return redirect('doctor_dashboard')
 

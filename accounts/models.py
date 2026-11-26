@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from datetime import date
+from datetime import date, time
 from core.utils import geocode_address
 
 SPECIALIZATION_CHOICES = [
@@ -106,6 +106,8 @@ class DoctorProfile(models.Model):
     video_consult      = models.BooleanField(default=True, help_text='Offers video consultation')
     video_consult_enabled = models.BooleanField(default=False)
     video_consult_fee  = models.DecimalField(max_digits=10, decimal_places=2, default=200.00)
+    video_available_from = models.TimeField(default=time(21, 0), help_text='Night video consultation start time (IST)')
+    video_available_to   = models.TimeField(default=time(22, 0), help_text='Night video consultation end time (IST)')
     chat_consult       = models.BooleanField(default=True, help_text='Offers chat consultation')
     # ── Verification ──────────────────────────────────────────────
     is_verified        = models.BooleanField(default=False)

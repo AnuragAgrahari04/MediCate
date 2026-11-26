@@ -20,6 +20,8 @@ urlpatterns = [
     path('appointment/<int:appointment_id>/upi-payment/', views.upi_payment, name='upi_payment'),
     path('appointment/<int:appointment_id>/mark-paid/', views.mark_upi_paid, name='mark_upi_paid'),
     path('appointment/<int:appointment_id>/no-upi/', views.no_upi_fallback, name='no_upi_fallback'),
+    path('appointments/<int:pk>/video/',         views.appointment_video,     name='appointment_video'),
+    path('appointments/<int:pk>/video/end/',     views.end_appointment_video, name='end_appointment_video'),
     # ── Doctor Appointment Management ─────────────────────────────
     path('doctor-appointments/',               views.doctor_appointments,    name='doctor_appointments'),
     path('appointment/<int:pk>/action/',        views.appointment_action,    name='appointment_action'),

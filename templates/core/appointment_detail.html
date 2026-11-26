@@ -181,13 +181,31 @@
       </div>
       {% endif %}
 
-      {% if appointment.status == 'confirmed' and appointment.appointment_type == 'video' and appointment.video_room_url %}
+      {% if appointment.appointment_type == 'video' and appointment.status == 'confirmed' or appointment.appointment_type == 'video' and appointment.status == 'accepted' %}
       <div class="gate-pass-display" style="background:var(--blue-light); border-color:var(--blue);">
-        <label style="color:var(--blue);">Video Consultation Link</label>
-        <a href="{{ appointment.video_room_url }}" target="_blank" class="btn-nb btn-nb-primary" style="margin-top:10px;">
-          Join Video Room
-        </a>
-        <p>Link will be active 5 minutes before your appointment time</p>
+        <label style="color:var(--blue);">Video Consultation</label>
+        <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-top:10px;">
+          {% if appointment.can_join_video %}
+            <a href="{% url 'appointment_video' appointment.pk %}" class="btn-nb btn-nb-primary">
+              Join Video Consultation
+            </a>
+          {% else %}
+            <button type="button" class="btn-nb btn-nb-secondary" disabled
+                    title="Available {{ appointment.video_window.window_label }}"
+                    style="opacity:0.55;cursor:not-allowed;">
+              Join Video Consultation
+            </button>
+          {% endif %}
+          {% if is_doctor %}
+          <form method="POST" action="{% url 'end_appointment_video' appointment.pk %}"
+                onsubmit="return confirm('End consultation #{{ appointment.pk }} and mark completed?');"
+                style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-nb btn-nb-danger">End Consultation</button>
+          </form>
+          {% endif %}
+        </div>
+        <p>Available {{ appointment.video_window.window_label }}</p>
       </div>
       {% endif %}
 

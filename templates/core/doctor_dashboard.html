@@ -136,6 +136,53 @@
     </a>
   </div>
 
+  <!-- Video Consultations (All appointments per slot, up to 6 patients/slot) -->
+  {% if video_appointments %}
+  <div class="card-nb" style="padding:0; overflow:hidden; margin-bottom:2rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:2.5px solid var(--text-primary);background:var(--bg-card);">
+      <div style="font-family:var(--font-display);font-size:1.25rem;font-weight:800;">
+        📹 Upcoming Video Consultations ({{ video_appointments|length }})
+      </div>
+      <a href="{% url 'doctor_appointments' %}" class="btn-nb btn-nb-secondary btn-nb-sm">All Appointments</a>
+    </div>
+    <div style="background:var(--bg-card);">
+      {% for appt in video_appointments %}
+      <div class="consult-row" style="flex-wrap:wrap;">
+        <div style="flex:1;min-width:220px;">
+          <div style="font-weight:800;color:var(--text-primary);font-size:1rem;font-family:var(--font-display);">
+            {{ appt.patient.name }}
+            <span class="badge-nb" style="font-size:0.7rem;margin-left:4px;">Appt #{{ appt.id }}</span>
+            {% if appt.queue_position %}<span class="badge-nb badge-nb-accent" style="font-size:0.7rem;">Queue #{{ appt.queue_position }}</span>{% endif %}
+          </div>
+          <div style="font-size:0.8125rem;color:var(--text-secondary);margin-top:0.25rem;font-weight:600;">
+            {{ appt.slot.date|date:"M d, Y" }} · {{ appt.slot.start_time|time:"g:i A" }} – {{ appt.slot.end_time|time:"g:i A" }} IST
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          {% if appt.can_join_video %}
+            <a href="{% url 'appointment_video' appt.pk %}" class="btn-nb btn-nb-primary btn-nb-sm">
+              Join Video Consultation
+            </a>
+          {% else %}
+            <button type="button" class="btn-nb btn-nb-secondary btn-nb-sm" disabled
+                    title="Available {{ appt.video_window.window_label }}"
+                    style="opacity:0.55;cursor:not-allowed;">
+              Join Video Consultation
+            </button>
+          {% endif %}
+          <form method="POST" action="{% url 'end_appointment_video' appt.pk %}"
+                onsubmit="return confirm('End video consultation #{{ appt.id }} and mark completed?');"
+                style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-nb btn-nb-danger btn-nb-sm">End Consultation</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Recent -->
   {% if recent %}
   <div class="card-nb" style="padding:0; overflow:hidden;">

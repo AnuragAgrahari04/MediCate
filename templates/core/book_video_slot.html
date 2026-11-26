@@ -345,11 +345,9 @@
         {% if doctor.experience_yrs %} · {{ doctor.experience_yrs }} yrs exp{% endif %}
         {% if doctor.hospital_name %} · {{ doctor.hospital_name }}{% endif %}
       </div>
-      {% if doctor.available_from and doctor.available_to %}
       <div class="bk-doc-sub" style="margin-top:4px;">
-        🕐 Available {{ doctor.available_from|time:"g:i A" }} – {{ doctor.available_to|time:"g:i A" }}
+        🌙 Night Video Hours: <strong>{{ video_hours_label }}</strong> · 10-min 1-on-1 slots
       </div>
-      {% endif %}
     </div>
     <div class="bk-doc-fee">
       <div class="bk-doc-fee-label">VIDEO CONSULTATION FEE</div>
@@ -420,7 +418,7 @@
               {% if slot.booked %}disabled title="Already booked"{% endif %}
             >
               {{ slot.label }}
-              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Full{% else %}{{ slot.spots }} spot{{ slot.spots|pluralize }} left{% endif %}</small>
+              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Booked{% else %}10 min · 1-on-1{% endif %}</small>
             </button>
             {% endfor %}
           </div>
@@ -446,7 +444,7 @@
               {% if slot.booked %}disabled title="Already booked"{% endif %}
             >
               {{ slot.label }}
-              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Full{% else %}{{ slot.spots }} spot{{ slot.spots|pluralize }} left{% endif %}</small>
+              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Booked{% else %}10 min · 1-on-1{% endif %}</small>
             </button>
             {% endfor %}
           </div>
@@ -472,7 +470,7 @@
               {% if slot.booked %}disabled title="Already booked"{% endif %}
             >
               {{ slot.label }}
-              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Full{% else %}{{ slot.spots }} spot{{ slot.spots|pluralize }} left{% endif %}</small>
+              <br><small style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">{% if slot.booked %}Booked{% else %}10 min · 1-on-1{% endif %}</small>
             </button>
             {% endfor %}
           </div>
@@ -506,11 +504,8 @@
       <div class="bk-confirm-label">Selected appointment</div>
       <div class="bk-confirm-slot" id="confirmSlotText">—</div>
       <div class="bk-confirm-fee">
-        <div style="margin-bottom: 8px;">
-          <label style="margin-right:10px;"><input type="radio" name="appt_type_ui" value="video" checked onchange="updateFee()"> In-Person</label>
-          {% if doctor.video_consult_enabled %}
-          <label><input type="radio" name="appt_type_ui" value="video" onchange="updateFee()"> Video Consult</label>
-          {% endif %}
+        <div style="margin-bottom: 6px; font-weight: 800;">
+          📹 Video Consultation (10-min private 1-on-1 slot)
         </div>
         <div id="feeDisplay">
           {% if doctor.video_consult_fee %}Fee: ₹<span id="feeAmount">{{ doctor.video_consult_fee }}</span>{% else %}Free consultation{% endif %}
@@ -617,19 +612,20 @@ function submitBooking() {
   }
   document.getElementById('inputDate').value = selectedDate;
   document.getElementById('inputTime').value = selectedTime;
-  const apptType = document.querySelector('input[name="appt_type_ui"]:checked').value;
-  document.getElementById('inputType').value = apptType;
+  const checked = document.querySelector('input[name="appt_type_ui"]:checked');
+  document.getElementById('inputType').value = checked ? checked.value : 'video';
   document.getElementById('bkForm').submit();
 }
 
 function updateFee() {
   const apptType = document.querySelector('input[name="appt_type_ui"]:checked').value;
+  document.getElementById('inputType').value = apptType;
   const feeEl = document.getElementById('feeAmount');
   if (feeEl) {
     if (apptType === 'video') {
       feeEl.textContent = '{{ doctor.video_consult_fee|default:0 }}';
     } else {
-      feeEl.textContent = '{{ doctor.video_consult_fee|default:0 }}';
+      feeEl.textContent = '{{ doctor.fee|default:0 }}';
     }
   }
 }
