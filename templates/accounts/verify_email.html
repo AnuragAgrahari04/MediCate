@@ -128,9 +128,9 @@
         </button>
       </form>
 
-      <div class="auth-footer-text">
-        Didn't receive the code?
-        <a href="/accounts/resend-otp/">Resend Code</a>
+      <div class="auth-footer-text" style="display:flex;flex-direction:column;align-items:center;gap:0.6rem;">
+        <span>Didn't receive the code?</span>
+        <a href="{% url 'resend_otp' %}" class="btn-nb btn-nb-secondary btn-nb-sm" style="text-decoration:none;">Resend OTP</a>
       </div>
 
     </div>

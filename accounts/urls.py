@@ -18,8 +18,10 @@ urlpatterns = [
     path('verify-email/',   views.verify_email,    name='verify_email'),
     path('resend-otp/',     views.resend_otp,      name='resend_otp'),
     # ── Forgot / Reset Password ───────────────────────────────────
-    path('forgot-password/',                            views.forgot_password, name='forgot_password'),
-    path('reset-password/<str:uidb64>/<str:token>/',    views.reset_password,  name='reset_password'),
+    path('forgot-password/',                            views.forgot_password,                 name='forgot_password'),
+    path('forgot-password/google/',                     views.forgot_password_google,          name='forgot_password_google'),
+    path('forgot-password/google/complete/',            views.forgot_password_google_complete, name='forgot_password_google_complete'),
+    path('reset-password/<str:uidb64>/<str:token>/',    views.reset_password,                  name='reset_password'),
     # ── Aadhaar Verification ──────────────────────────────────────
     path('aadhaar-verify/',              views.aadhaar_verify,            name='aadhaar_verify'),
     path('doctor-verification-status/', views.doctor_verification_status, name='doctor_verification_status'),

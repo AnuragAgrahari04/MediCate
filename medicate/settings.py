@@ -186,7 +186,7 @@ RAZORPAY_KEY_ID    = config('RAZORPAY_KEY_ID',    default='')
 RAZORPAY_KEY_SECRET= config('RAZORPAY_KEY_SECRET',default='')
 DAILY_API_KEY      = config('DAILY_API_KEY',      default='')
 
-# ── Email (HTTPS APIs for Render Free Tier + Gmail SMTP fallback) ─
+# ── Email (Brevo HTTPS API in production + Django SMTP fallback locally) ─
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST          = config('EMAIL_HOST',          default='smtp.gmail.com')
 EMAIL_PORT          = config('EMAIL_PORT',          default=587, cast=int)
@@ -195,10 +195,8 @@ EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default=EMAIL_HOST_USER or 'noreply@medicate.app')
 EMAIL_TIMEOUT       = 10
-EMAIL_WEBHOOK_URL   = config('EMAIL_WEBHOOK_URL',   default='')
-EMAIL_WEBHOOK_SECRET= config('EMAIL_WEBHOOK_SECRET',default='')
 BREVO_API_KEY       = config('BREVO_API_KEY',       default='')
-RESEND_API_KEY      = config('RESEND_API_KEY',      default='')
+BREVO_SENDER_EMAIL  = config('BREVO_SENDER_EMAIL',  default='')
 
 # ── Session & Messages ────────────────────────────────────────────
 SESSION_COOKIE_AGE         = 86400

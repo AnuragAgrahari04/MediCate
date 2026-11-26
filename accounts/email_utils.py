@@ -1,4 +1,4 @@
-"""Email utilities for MediCate — HTTPS email APIs (Render-safe) + SMTP fallback."""
+"""Email utilities for MediCate — Brevo HTTPS API with Django SMTP fallback."""
 import logging
 import random
 import string
@@ -12,123 +12,85 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
-def _deliver_via_webhook(subject, message, recipient_list):
-    """Deliver email via HTTPS webhook (e.g. Google Apps Script Gmail relay)."""
-    url = getattr(settings, 'EMAIL_WEBHOOK_URL', '').strip()
-    if not url:
-        return None
-    secret = getattr(settings, 'EMAIL_WEBHOOK_SECRET', '').strip()
-    for to_addr in recipient_list:
-        resp = requests.post(
-            url,
-            json={'to': to_addr, 'subject': subject, 'body': message, 'secret': secret},
-            timeout=10,
-        )
-        if resp.status_code >= 400:
-            raise RuntimeError(f'Webhook HTTP {resp.status_code}: {resp.text[:200]}')
-        # Google Apps Script returns 200 JSON; check ok flag if JSON
-        try:
-            data = resp.json()
-            if isinstance(data, dict) and data.get('ok') is False:
-                raise RuntimeError(data.get('error', 'Webhook returned ok=false'))
-        except ValueError:
-            pass
-    return True
-
-
-def _deliver_via_brevo(subject, message, recipient_list):
-    """Deliver email over HTTPS port 443 using Brevo transactional email API."""
-    api_key = getattr(settings, 'BREVO_API_KEY', '').strip()
-    if not api_key:
-        return None
-    sender_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '') or getattr(settings, 'EMAIL_HOST_USER', '')
-    if not sender_email or '@' not in sender_email:
-        raise RuntimeError('DEFAULT_FROM_EMAIL / EMAIL_HOST_USER must be set for Brevo.')
-    resp = requests.post(
-        'https://api.brevo.com/v3/smtp/email',
-        headers={'api-key': api_key, 'Content-Type': 'application/json'},
-        json={
-            'sender': {'name': 'MediCate', 'email': sender_email},
-            'to': [{'email': addr} for addr in recipient_list],
-            'subject': subject,
-            'textContent': message,
-        },
-        timeout=10,
-    )
-    if resp.status_code >= 400:
-        raise RuntimeError(f'Brevo API {resp.status_code}: {resp.text[:200]}')
-    return True
-
-
-def _deliver_via_resend(subject, message, recipient_list):
-    """Deliver email over HTTPS port 443 using Resend API."""
-    api_key = getattr(settings, 'RESEND_API_KEY', '').strip()
-    if not api_key:
-        return None
-    sender_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '') or 'MediCate <onboarding@resend.dev>'
-    resp = requests.post(
-        'https://api.resend.com/emails',
-        headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
-        json={
-            'from': sender_email,
-            'to': list(recipient_list),
-            'subject': subject,
-            'text': message,
-        },
-        timeout=10,
-    )
-    if resp.status_code >= 400:
-        raise RuntimeError(f'Resend API {resp.status_code}: {resp.text[:200]}')
-    return True
-
-
-def _deliver_email(subject, message, recipient_list):
+def send_email(to, subject, text, html=None):
     """
-    Send email via configured HTTPS API first (works on Render free tier where
-    SMTP ports 25/465/587 are blocked), falling back to Django SMTP.
-    Returns (True, None) on success or (False, error_message) on failure.
+    Send an email via Brevo HTTPS API when BREVO_API_KEY is configured,
+    otherwise fall back to Django's send_mail (local SMTP).
+    Returns True on success, False on failure. Never logs API keys.
     """
-    recipients = [r for r in (recipient_list or []) if r]
+    recipients = [to] if isinstance(to, str) else list(to or [])
+    recipients = [r.strip() for r in recipients if r and r.strip()]
     if not recipients:
-        return False, 'No recipient email provided.'
+        logger.error('send_email called with no valid recipients.')
+        return False
 
-    errors = []
-    for name, fn in (
-        ('Webhook', _deliver_via_webhook),
-        ('Brevo', _deliver_via_brevo),
-        ('Resend', _deliver_via_resend),
-    ):
+    brevo_key = (getattr(settings, 'BREVO_API_KEY', '') or '').strip()
+    if brevo_key:
+        sender_email = (
+            getattr(settings, 'BREVO_SENDER_EMAIL', '')
+            or getattr(settings, 'DEFAULT_FROM_EMAIL', '')
+            or getattr(settings, 'EMAIL_HOST_USER', '')
+        ).strip()
+        if not sender_email or '@' not in sender_email:
+            logger.error('BREVO_SENDER_EMAIL is not configured cleanly.')
+            return False
+
+        payload = {
+            'sender': {'name': 'MediCate', 'email': sender_email},
+            'to': [{'email': addr} for addr in recipients],
+            'subject': subject,
+            'textContent': text,
+        }
+        if html:
+            payload['htmlContent'] = html
+
         try:
-            result = fn(subject, message, recipients)
-            if result:
-                return True, None
-        except Exception as exc:
-            logger.error(f'{name} email failed to {recipients}: {exc}')
-            errors.append(f'{name}: {exc}')
+            resp = requests.post(
+                'https://api.brevo.com/v3/smtp/email',
+                headers={
+                    'api-key': brevo_key,
+                    'accept': 'application/json',
+                    'content-type': 'application/json',
+                },
+                json=payload,
+                timeout=10,
+            )
+            if 200 <= resp.status_code < 300:
+                return True
+            logger.error(
+                'Brevo send_email failed (status=%s) for %s: %s',
+                resp.status_code,
+                recipients,
+                resp.text,
+            )
+            return False
+        except requests.RequestException as exc:
+            logger.error('Brevo send_email request error for %s: %s', recipients, exc)
+            return False
 
     try:
-        send_mail(
+        sent_count = send_mail(
             subject,
-            message,
+            text,
             settings.DEFAULT_FROM_EMAIL,
             recipients,
+            html_message=html,
             fail_silently=False,
         )
-        return True, None
+        return bool(sent_count)
     except Exception as exc:
-        logger.error(f'SMTP email failed to {recipients}: {exc}')
-        errors.append(f'SMTP: {exc}')
-        return False, '; '.join(errors)
+        logger.error('Django send_mail failed for %s: %s', recipients, exc)
+        return False
 
 
-def _send_async(subject, message, recipient_list, fail_silently=True):
-    """Send email in a background daemon thread so HTTP requests do not block."""
-    def _worker():
-        ok, err = _deliver_email(subject, message, recipient_list)
-        if not ok and not fail_silently:
-            logger.error(f'Async email delivery failed to {recipient_list}: {err}')
-
-    threading.Thread(target=_worker, daemon=True).start()
+def _send_async(to, subject, text, html=None):
+    """Send non-blocking notification emails in a background thread via send_email."""
+    threading.Thread(
+        target=send_email,
+        args=(to, subject, text),
+        kwargs={'html': html},
+        daemon=True,
+    ).start()
 
 
 def generate_otp(length=6):
@@ -145,8 +107,8 @@ def set_otp(profile):
     return otp
 
 
-def send_otp_email(user_email, otp, name='User', sync=False):
-    """Send OTP verification email (non-blocking by default for instant signup)."""
+def send_otp_email(user_email, otp, name='User'):
+    """Send OTP verification email synchronously via send_email and return True/False."""
     subject = '🔐 Your MediCate Verification Code'
     message = f"""
 Hi {name},
@@ -163,11 +125,7 @@ If you did not create a MediCate account, please ignore this email.
 
 — The MediCate Team
 """
-    if not sync:
-        _send_async(subject, message, [user_email], fail_silently=False)
-        return True
-    ok, _ = _deliver_email(subject, message, [user_email])
-    return ok
+    return send_email(user_email, subject, message)
 
 
 def send_appointment_email_to_doctor(doctor_email, doctor_name, patient_name, slot_date, slot_time, appointment_id):
@@ -189,7 +147,7 @@ Please log in to your dashboard to Accept or Reject this appointment.
 
 — The MediCate Team
 """
-    _send_async(subject, message, [doctor_email], fail_silently=True)
+    _send_async(doctor_email, subject, message)
 
 
 def send_appointment_status_email(patient_email, patient_name, doctor_name, status, slot_date, slot_time, gate_pass=None, reason=None):
@@ -226,7 +184,7 @@ Please book another slot at your convenience.
 
 — The MediCate Team
 """
-    _send_async(subject, message, [patient_email], fail_silently=True)
+    _send_async(patient_email, subject, message)
 
 
 def send_welcome_email(user_email, name, role='patient'):
@@ -248,14 +206,11 @@ Get started: https://medicate-moa4.onrender.com/
 
 — The MediCate Team
 """
-    _send_async(subject, message, [user_email], fail_silently=True)
+    _send_async(user_email, subject, message)
 
 
 def send_password_reset_email(user_email, username, reset_url):
-    """
-    Send password reset link synchronously using HTTPS email APIs or SMTP fallback.
-    Returns (True, None) on success or (False, error_detail) if delivery fails.
-    """
+    """Send password reset link synchronously via send_email and return True/False."""
     subject = '🔑 Reset Your MediCate Password'
     message = f"""Hi {username},
 
@@ -267,4 +222,4 @@ If you did not request a password reset, please ignore this email.
 
 — The MediCate Team
 """
-    return _deliver_email(subject, message, [user_email])
+    return send_email(user_email, subject, message)

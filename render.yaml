@@ -32,18 +32,14 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
 
-      # -- Email (HTTPS APIs for Render Free Tier + SMTP fallback) -----
+      # -- Email (Brevo HTTPS API + SMTP fallback) -------------------
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
       - key: EMAIL_HOST_USER
         sync: false
       - key: EMAIL_HOST_PASSWORD
-        sync: false
-      - key: EMAIL_WEBHOOK_URL
-        sync: false
-      - key: EMAIL_WEBHOOK_SECRET
-        sync: false
-      - key: BREVO_API_KEY
-        sync: false
-      - key: RESEND_API_KEY
         sync: false
 
       # -- Video (Daily.co) ------------------------------------------

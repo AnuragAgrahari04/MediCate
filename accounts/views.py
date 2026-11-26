@@ -1,12 +1,16 @@
+import time
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
+from allauth.socialaccount.models import SocialAccount
+from allauth.account.models import EmailAddress
 
 from .forms import (
     PatientSignupForm, DoctorSignupForm,
@@ -48,7 +52,7 @@ def signup_patient(request):
         if ok:
             messages.success(request, f'Account created! We sent a verification code to {user.email}.')
         else:
-            messages.warning(request, 'Account created but we could not send the OTP email. You can resend it below.')
+            messages.warning(request, 'Could not send the email, please try Resend.')
         return redirect('verify_email')
     return render(request, 'accounts/signup_patient.html', {'form': form})
 
@@ -89,7 +93,7 @@ def signup_doctor(request):
         if ok:
             messages.success(request, f'Account created! We sent a verification code to {user.email}.')
         else:
-            messages.warning(request, 'Account created but we could not send the OTP email. You can resend it below.')
+            messages.warning(request, 'Could not send the email, please try Resend.')
         return redirect('verify_email')
     return render(request, 'accounts/signup_doctor.html', {'form': form})
 
@@ -163,7 +167,7 @@ def resend_otp(request):
         if ok:
             messages.success(request, f'A new verification code has been sent to {user.email}.')
         else:
-            messages.error(request, 'Could not send email. Please check your email address or try again later.')
+            messages.error(request, 'Could not send the email, please try Resend.')
     return redirect('verify_email')
 
 
@@ -223,7 +227,10 @@ def logout_view(request):
 
 @login_required
 def oauth_redirect(request):
-    """Post-OAuth landing: route existing users to their dashboard or create profile for new Google sign-ins."""
+    """Post-OAuth landing: route Google password resets, existing users, or new Google sign-ins."""
+    if 'google_pw_reset' in request.session:
+        return forgot_password_google_complete(request)
+
     user = request.user
     if hasattr(user, 'doctor_profile'):
         profile = user.doctor_profile
@@ -271,35 +278,40 @@ def oauth_redirect(request):
 # FORGOT / RESET PASSWORD
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _find_user_by_email(email):
+    """Find a User by email across User, PatientProfile, or DoctorProfile."""
+    user = User.objects.filter(email__iexact=email).first()
+    if user:
+        return user
+    p = PatientProfile.objects.filter(email__iexact=email).select_related('user').first()
+    if p:
+        return p.user
+    d = DoctorProfile.objects.filter(email__iexact=email).select_related('user').first()
+    return d.user if d else None
+
+
 def forgot_password(request):
-    """Step 1: User enters email → we send reset link."""
+    """Step 1: User enters email → we send token-based reset link."""
     form = ForgotPasswordForm(request.POST or None)
     sent = False
-    delivery_error = False
     if request.method == 'POST' and form.is_valid():
         email = form.cleaned_data['email'].strip().lower()
-        user = User.objects.filter(email__iexact=email).first()
-        if not user:
-            p = PatientProfile.objects.filter(email__iexact=email).select_related('user').first()
-            d = DoctorProfile.objects.filter(email__iexact=email).select_related('user').first() if not p else None
-            user = (p or d).user if (p or d) else None
-
+        user = _find_user_by_email(email)
         if user:
             uid   = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             reset_url = request.build_absolute_uri(f'/accounts/reset-password/{uid}/{token}/')
-            ok, err = send_password_reset_email(email, user.username, reset_url)
+            ok = send_password_reset_email(email, user.username, reset_url)
             if ok:
                 sent = True
                 messages.success(
                     request,
-                    f'Reset link sent to {email}! Please check your inbox and spam folder.'
+                    'If an account exists with that email, a password reset link has been sent. Please check your inbox and spam folder.'
                 )
             else:
-                delivery_error = True
                 messages.error(
                     request,
-                    'Email delivery failed on the server (SMTP is blocked on free hosting unless an HTTPS email relay like Brevo or Google Apps Script is configured). Please use "Continue with Google" to sign in or contact support.'
+                    'Could not send the email, please try again later or use Reset with Google.'
                 )
         else:
             sent = True
@@ -310,9 +322,95 @@ def forgot_password(request):
     return render(request, 'accounts/forgot_password.html', {
         'form': form,
         'sent': sent,
-        'delivery_error': delivery_error,
         'submitted_email': request.POST.get('email', ''),
     })
+
+
+@require_POST
+def forgot_password_google(request):
+    """Initiate Google-verified password reset for a specific target account email."""
+    form = ForgotPasswordForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Please enter a valid registered email address first.')
+        return redirect('forgot_password')
+
+    target_email = form.cleaned_data['email'].strip().lower()
+    target_user = _find_user_by_email(target_email)
+
+    if request.user.is_authenticated:
+        logout(request)
+
+    request.session['google_pw_reset'] = {
+        'target_email': target_email,
+        'target_user_id': target_user.pk if target_user else None,
+        'expires_at': time.time() + 600,  # 10 minutes
+    }
+    request.session.modified = True
+    return redirect('/accounts/google/login/?process=login&next=/accounts/forgot-password/google/complete/')
+
+
+def forgot_password_google_complete(request):
+    """
+    Complete Google-verified password reset:
+    - Session flag is single-use and expires in 10 minutes.
+    - Google email must match target email (case-insensitive) AND be Google-verified.
+    """
+    reset_state = request.session.pop('google_pw_reset', None)
+    request.session.modified = True
+
+    def _fail_and_cleanup():
+        if request.user.is_authenticated:
+            u = request.user
+            has_profile = (
+                hasattr(u, 'patient_profile')
+                or hasattr(u, 'doctor_profile')
+                or u.is_staff
+            )
+            logout(request)
+            if not has_profile:
+                u.delete()
+        messages.error(request, 'Unable to verify Google account for password reset. Please try again.')
+        return redirect('forgot_password')
+
+    if not request.user.is_authenticated or not isinstance(reset_state, dict):
+        return _fail_and_cleanup()
+
+    if time.time() > float(reset_state.get('expires_at', 0)):
+        return _fail_and_cleanup()
+
+    target_email = (reset_state.get('target_email') or '').strip().lower()
+    target_user_id = reset_state.get('target_user_id')
+    if not target_email or not target_user_id:
+        return _fail_and_cleanup()
+
+    social = SocialAccount.objects.filter(user=request.user, provider='google').first()
+    google_email = ''
+    google_verified = False
+    if social:
+        extra = social.extra_data or {}
+        google_email = (extra.get('email') or '').strip().lower()
+        raw_verified = extra.get('email_verified', extra.get('verified_email'))
+        google_verified = raw_verified is True or str(raw_verified).lower() == 'true'
+
+    if not google_verified:
+        ea = EmailAddress.objects.filter(
+            user=request.user, email__iexact=target_email, verified=True
+        ).first()
+        if ea:
+            google_email = ea.email.strip().lower()
+            google_verified = True
+
+    if not google_verified or not google_email or google_email != target_email:
+        return _fail_and_cleanup()
+
+    target_user = User.objects.filter(pk=target_user_id).first()
+    if not target_user:
+        return _fail_and_cleanup()
+
+    uid = urlsafe_base64_encode(force_bytes(target_user.pk))
+    token = default_token_generator.make_token(target_user)
+    logout(request)
+    return redirect('reset_password', uidb64=uid, token=token)
 
 
 def reset_password(request, uidb64, token):
